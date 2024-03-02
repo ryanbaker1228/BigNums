@@ -105,7 +105,7 @@ BigInt operator+(const BigInt& left, const BigInt& right)
 
 	BigInt bn(sum);
 
-	while (bn.digits.front() <= 0)
+	while (bn.digits.front() <= 0 && bn.digits.size() > 1)
 	{
 		bn.digits.pop_front();
 	}
@@ -117,6 +117,12 @@ BigInt operator+(const BigInt& left, const BigInt& right)
 BigInt operator-(const BigInt& left, const BigInt& right)
 {{{
 	return left + -right;
+}}}
+
+
+BigInt operator*(const BigInt& left, const BigInt& right)
+{{{
+	return BigInt(0);
 }}}
 
 

@@ -28,42 +28,70 @@ static int _test_bigint_addition()
 	std::mt19937_64 gen(rd());
 	std::uniform_int_distribution<int32_t> dist;
 
-	for (int i = -100; i <= 100; ++i)
-	{{{
-		for (int j = -10; j <= 10; ++j)
-		{
-			std::string sum    = std::to_string(i + j);
-			BigInt 		bn 	   = i + j;
-			std::string bn_sum = bn.to_string();
+	mu_tick();
+	// add lots of random ints, testing all forms of construction
+	for (int i = 0; i < 5000; ++i)
+	{{{ 
+		int64_t a = dist(gen);
+		int64_t b = dist(gen);
 
-			mu_set_error_message(std::to_string(i) + " + " + std::to_string(j) + " != " + bn_sum);
-			mu_assert_strings_equal(sum, bn_sum);
-		}
+		BigInt bn_a(a);
+		BigInt bn_b(b);
+
+		std::string sum_true = std::to_string(a + b);
+		std::string sum_bn   = BigInt(bn_a + bn_b).to_string();
+		std::string sum_int  = BigInt(bn_a + b).to_string();
+		std::string sum_str  = BigInt(bn_a + std::to_string(b)).to_string();
+
+		std::string diff_true = std::to_string(a - b);
+		std::string diff_bn   = BigInt(bn_a - bn_b).to_string();
+		std::string diff_int  = BigInt(bn_a - b).to_string();
+		std::string diff_str  = BigInt(bn_a - std::to_string(b)).to_string();
+
+		mu_assert(sum_true  == sum_bn  && sum_true  == sum_int  && sum_true  == sum_str);
+		mu_assert(diff_true == diff_bn && diff_true == diff_int && diff_true == diff_str);
 	}}}
 
+	// add lost of smaller ints, including some zeros
+	for (int i = 0; i < 5000; ++i)
+	{{{
+		int32_t a = dist(gen) % 100;
+		int32_t b = dist(gen) % 100;
+
+		BigInt bn_a(a);
+		BigInt bn_b(b);
+
+		std::string sum_true = std::to_string(a + b);
+		std::string sum_bn   = BigInt(bn_a + bn_b).to_string();
+		std::string sum_int  = BigInt(bn_a + b).to_string();
+		std::string sum_str  = BigInt(bn_a + std::to_string(b)).to_string();
+		
+		std::string diff_true = std::to_string(a - b);
+		std::string diff_bn   = BigInt(bn_a - bn_b).to_string();
+		std::string diff_int  = BigInt(bn_a - b).to_string();
+		std::string diff_str  = BigInt(bn_a - std::to_string(b)).to_string();
+
+		mu_assert(sum_true  == sum_bn  && sum_true  == sum_int  && sum_true  == sum_str);
+		mu_assert(diff_true == diff_bn && diff_true == diff_int && diff_true == diff_str);
+	}}}
+
+	// add all complements of 10000 to test for various overflow cases
 	for (int i = 0, j = 10000; i <= 10000; ++i, --j)
 	{{{
-		BigInt 		bn	   = i + j;
-		std::string bn_sum = bn.to_string();
-		mu_set_error_message(std::to_string(i) + " + " + std::to_string(j) + " != " + bn_sum);
-		mu_assert_strings_equal("10000", bn_sum);
-	}}}
+		BigInt bn_i(i);
+		BigInt bn_j(j);
 
-	for (int i = 0; i < 10000; ++i)
-	{{{  
-		int64_t m = dist(gen);
-		int64_t n = dist(gen);
+		std::string sum_bn  = BigInt(bn_i + bn_j).to_string();
+		std::string sum_int = BigInt(bn_i + j).to_string();
+		std::string sum_str = BigInt(bn_i + std::to_string(j)).to_string();
 
-		BigInt bn_m(m);
-		BigInt bn_n(n);
-	
-		std::string sum    = std::to_string(m + n);
-		BigInt 		bn	   = bn_m + bn_n;
-		std::string bn_sum = bn.to_string();
+		std::string diff_bn  = BigInt(bn_i - bn_i).to_string();
+		std::string diff_int = BigInt(bn_i + j).to_string();
+		std::string diff_str = BigInt(bn_i + std::to_string(j)).to_string();
 
-		mu_set_error_message(std::to_string(m) + " + " + std::to_string(n) + " != " + bn_sum);
-		mu_assert_strings_equal(sum, bn_sum);
-	}}}
+		mu_assert("10000" == sum_bn && "10000" == sum_int && "10000" == sum_str);
+		mu_assert("0"     == diff_bn && "0"    == diff_int && "0"    == diff_str);
+	}}} 
 
 	mu_return();
 }}}

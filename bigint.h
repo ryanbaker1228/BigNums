@@ -34,8 +34,12 @@ public:
 	friend BigInt operator+(const BigInt& left, const BigInt& right);
 
 	template <typename T>
-	friend BigInt operator-(const BigInt& left, const T& right) { return left + BigInt(right); }
+	friend BigInt operator-(const BigInt& left, const T& right) { return left - BigInt(right); }
 	friend BigInt operator-(const BigInt& left, const BigInt& right);
+
+	template <typename T>
+	friend BigInt operator*(const BigInt& left, const T& right) { return left * BigInt(right); }
+	friend BigInt operator*(const BigInt& left, const BigInt& right);
 
 	BigInt operator-() const;
 	BigInt operator+() const;

@@ -74,6 +74,12 @@ miniunit_block(\
 )
 
 
+#define mu_tick()\
+miniunit_block(\
+	miniunit_start = std::chrono::high_resolution_clock::now();\
+)
+
+
 static void mu_set_error_message(const std::string message)
 {{{
 	if (miniunit_line != 0) { return; }
