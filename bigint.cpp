@@ -68,7 +68,7 @@ std::string BigInt::to_string() const
 
 
 BigInt operator+(const BigInt& left, const BigInt& right)
-{{{
+{{{ 
 	if (+left < +right)   { return right + left; }
 	if (left.sign == '-') { return -(-left + -right); }
 
@@ -122,7 +122,34 @@ BigInt operator-(const BigInt& left, const BigInt& right)
 
 BigInt operator*(const BigInt& left, const BigInt& right)
 {{{
-	return BigInt(0);
+	if 		(left == 0 || right == 0) { return 0; }
+	else if (left == 1)				  { return right; }
+	else if (right == 1)			  { return left; }
+
+	BigInt product(0);
+	
+	for (int i = right.digits.size()-1; i >= 0; --i)
+	{{{
+		int carry = 0;
+		BigInt current_sum(0);
+
+		for (int j = left.digits.size()-1; j >= 0; --j)
+		{{{
+			int current_product = left.digits[j] * right.digits[i] + carry;
+			current_sum.digits.push_front(current_product % 10);
+			carry = current_product / 10;
+		}}}
+
+		current_sum.digits.pop_back();
+
+		if (carry > 0) { current_sum.digits.push_front(carry); }
+
+		for (int j = right.digits.size()-1; j > i; --j) { current_sum.digits.push_back(0); }
+
+		product = product + current_sum;
+	}}}
+	
+	return product;
 }}}
 
 
