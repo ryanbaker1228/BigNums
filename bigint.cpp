@@ -125,6 +125,8 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 	if 		(left == 0 || right == 0) { return 0; }
 	else if (left == 1)				  { return right; }
 	else if (right == 1)			  { return left; }
+	else if (left == -1)			  { return -right; }
+	else if (right == -1)			  { return -left; }
 
 	BigInt product(0);
 	
@@ -149,7 +151,13 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 		product = product + current_sum;
 	}}}
 	
-	return product;
+	return (left.sign == right.sign) ? product : -product;
+}}}
+
+
+BigInt operator/(const BigInt& left, const BigInt& right)
+{{{
+	return 0;	
 }}}
 
 
@@ -226,3 +234,4 @@ std::ostream& operator<<(std::ostream& out, const BigInt& bn)
 	out << bn.to_string();  
 	return out;
 }}}
+
