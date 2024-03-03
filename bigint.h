@@ -59,7 +59,11 @@ public:
 	friend bool operator> (const BigInt& left, const BigInt& right);
 	friend bool operator>=(const BigInt& left, const BigInt& right);
 
-
+	friend BigInt operator+=(BigInt& left, const BigInt& right);
+	friend BigInt operator-=(BigInt& left, const BigInt& right);
+	friend BigInt operator*=(BigInt& left, const BigInt& right);
+	friend BigInt operator/=(BigInt& left, const BigInt& right);
+	friend BigInt operator%=(BigInt& left, const BigInt& right);
 
 	friend std::ostream& operator <<(std::ostream& out, const BigInt& bn);
 

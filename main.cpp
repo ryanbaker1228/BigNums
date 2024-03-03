@@ -6,7 +6,7 @@
 
 
 
-int main( )
+int main()
 {{{ 
 	test_bigint_full();		
 

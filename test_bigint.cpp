@@ -1,4 +1,3 @@
-#include <array>
 #include <random>
 
 #include "miniunit.h"
@@ -13,21 +12,32 @@ static int _test_bigint_comparison();
 static int _test_bigint_multiplication();
 static int _test_bigint_division();
 static int _test_bigint_modulus();
+static int _test_bigint_complex_assignment();
 
 
 static void test_bigint_full()
-{{{   
+{{{     
+	auto start = std::chrono::high_resolution_clock::now();
+
 	mu_run(_test_bigint_addition);
 	mu_run(_test_bigint_negation);
 	mu_run(_test_bigint_comparison);
 	mu_run(_test_bigint_multiplication);
 	mu_run(_test_bigint_division);
 	mu_run(_test_bigint_modulus);
+	mu_run(_test_bigint_complex_assignment);
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+	std::cout << std::endl << (float)duration.count() / 1000 << " microseconds" << std::endl 
+	          << (float)duration.count() / 1000000 << " milliseconds" << std::endl 
+			  << (float)duration.count() / 1000000000 << " seconds" << std::endl << std::endl;
 }}}
 
 
 static int _test_bigint_addition() 
-{{{   
+{{{    
 	mu_configure();
 
 	std::random_device rd;
@@ -262,8 +272,7 @@ static int _test_bigint_division()
 		mu_assert(div_true == div_str);
 	}}}
 
-	//test smaller numbers, including zero and one
-	for (int i = 0; i < 1000; ++i)
+	//test smaller numbers, including one
 	{{{
 		int64_t a = dist(gen) % 100;
 		int64_t b = dist(gen) % 100;
@@ -317,7 +326,7 @@ static int _test_bigint_modulus()
 		mu_assert(mod_true == mod_str);
 	}}}
 
-	//test smaller numbers, including zero and one
+	//test smaller numbers, including one
 	for (int i = 0; i < 1000; ++i)
 	{{{
 		int64_t a = dist(gen) % 100;
@@ -339,6 +348,64 @@ static int _test_bigint_modulus()
 	}}}
 	
 	mu_return();
+}}}
 
+
+static int _test_bigint_complex_assignment()
+{{{
+	mu_configure();
+
+	std::random_device rd;
+	std::mt19937_64 gen(rd());
+	std::uniform_int_distribution<int32_t> dist;
+
+	mu_tick();
+	// test lots of random numbers
+	for (int i = 0; i < 1000; ++i)
+	{{{
+		int64_t a = dist(gen) - INT_MAX / 2;
+		int64_t b = dist(gen) % 200 - 100;
+
+		while (b == 0) { b = dist(gen) % 200 - 100; }
+
+		BigInt bn_a(a);
+		BigInt bn_b(b);
+		BigInt bn_c;
+
+		bn_c  = bn_a / bn_b;
+		bn_a /= bn_b;
+		mu_assert(bn_c.to_string() == bn_a.to_string());
+				
+		bn_c  = bn_a + bn_b;
+		bn_a += bn_b;
+		mu_assert(bn_c.to_string() == bn_a.to_string());	
+
+		bn_c  = bn_a * bn_b;
+		bn_a *= bn_b;
+		mu_assert(bn_c.to_string() == bn_a.to_string());	
+
+		bn_c  = bn_a + bn_b;
+		bn_a += b;
+		mu_assert(bn_c.to_string() == bn_a.to_string());	
+
+		bn_c  = bn_a * bn_b;
+		bn_a *= std::to_string(b);
+		mu_assert(bn_c.to_string() == bn_a.to_string());	
+
+		bn_c  = bn_a - bn_b;
+		bn_a -= bn_b;
+		mu_assert(bn_c.to_string() == bn_a.to_string());	
+
+		bn_c  = bn_a - bn_b;
+		bn_a -= bn_b;
+		mu_assert(bn_c.to_string() == bn_a.to_string());	
+
+		bn_c  = bn_a % bn_b;
+		bn_a %= bn_b;
+		mu_assert(bn_c.to_string() == bn_a.to_string());
+		
+	}}}
+
+	mu_return();
 }}}
 

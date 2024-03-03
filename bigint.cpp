@@ -278,6 +278,41 @@ bool operator>=(const BigInt& left, const BigInt& right)
 }}}
 
 
+BigInt operator+=(BigInt& left, const BigInt& right)
+{{{
+	left = left + right;
+	return left;
+}}}
+
+
+BigInt operator-=(BigInt& left, const BigInt& right)
+{{{
+	left = left - right;
+	return left;
+}}}
+
+
+BigInt operator*=(BigInt& left, const BigInt& right)
+{{{
+	left = left * right;
+	return left;
+}}}
+
+
+BigInt operator/=(BigInt& left, const BigInt& right)
+{{{
+	left = left / right;
+	return left;
+}}}
+
+
+BigInt operator%=(BigInt& left, const BigInt& right)
+{{{
+	left = left % right;
+	return left;
+}}}
+
+
 std::ostream& operator<<(std::ostream& out, const BigInt& bn)
 {{{
 	out << bn.to_string();  
