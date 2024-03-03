@@ -182,6 +182,34 @@ BigInt operator/(const BigInt& left, const BigInt& right)
 }}}
 
 
+BigInt operator%(const BigInt& left, const BigInt& right)
+{{{
+	if (right == 0) 	{ 
+		std::cerr << "Warning, attempted modulus division by zero returns zero.\n";
+		return 0;
+	}
+	if (right > +left) { return left * (left.sign == '+' ? 1 : -1); }
+
+	BigInt quotient(std::string(left.digits.size(), '0'));
+	BigInt remainder;
+
+	for (int i = 0; i < left.digits.size(); ++i)
+	{{{
+		remainder.digits.push_back(left.digits[i]);
+
+		remainder.trim();
+		while (remainder >= +right)
+		{
+			remainder = remainder - +right;
+			quotient.digits[i] += 1;
+		}
+	}}}
+
+	remainder.trim();
+	return remainder * (left.sign == '+' ? 1 : -1);
+}}}
+
+
 BigInt BigInt::operator-() const
 {{{
 	BigInt bn(*this);

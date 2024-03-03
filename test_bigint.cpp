@@ -12,6 +12,7 @@ static int _test_bigint_negation();
 static int _test_bigint_comparison();
 static int _test_bigint_multiplication();
 static int _test_bigint_division();
+static int _test_bigint_modulus();
 
 
 static void test_bigint_full()
@@ -21,6 +22,7 @@ static void test_bigint_full()
 	mu_run(_test_bigint_comparison);
 	mu_run(_test_bigint_multiplication);
 	mu_run(_test_bigint_division);
+	mu_run(_test_bigint_modulus);
 }}}
 
 
@@ -279,6 +281,61 @@ static int _test_bigint_division()
 		mu_assert(div_true == div_bn);
 		mu_assert(div_true == div_int);
 		mu_assert(div_true == div_str);
+	}}}
+	
+	mu_return();
+}}}
+
+
+static int _test_bigint_modulus()
+{{{
+	mu_configure();
+
+	std::random_device rd;
+	std::mt19937_64 gen(rd());
+	std::uniform_int_distribution<int32_t> dist;
+
+	mu_tick();
+	// test lots of random numbers
+	for (int i = 0; i < 1000; ++i)
+	{{{
+		int64_t a = dist(gen) - INT_MAX / 2;
+		int64_t b = dist(gen) % 200 - 100;
+
+		while (b == 0) { b = dist(gen) % 200 - 100; }
+
+		BigInt bn_a(a);
+		BigInt bn_b(b);
+
+		std::string mod_true = std::to_string(a % b);
+		std::string mod_bn   = (bn_a % bn_b).to_string();
+		std::string mod_int  = (bn_a % b).to_string();
+		std::string mod_str  = (bn_a % std::to_string(b)).to_string();
+
+		mu_assert(mod_true == mod_bn);
+		mu_assert(mod_true == mod_int);
+		mu_assert(mod_true == mod_str);
+	}}}
+
+	//test smaller numbers, including zero and one
+	for (int i = 0; i < 1000; ++i)
+	{{{
+		int64_t a = dist(gen) % 100;
+		int64_t b = dist(gen) % 100;
+
+		while (b == 0) { b = dist(gen) % 100; }
+
+		BigInt bn_a(a);
+		BigInt bn_b(b);
+
+		std::string mod_true = std::to_string(a % b);
+		std::string mod_bn   = (bn_a % bn_b).to_string();
+		std::string mod_int  = (bn_a % b).to_string();
+		std::string mod_str  = (bn_a % std::to_string(b)).to_string();
+
+		mu_assert(mod_true == mod_bn);
+		mu_assert(mod_true == mod_int);
+		mu_assert(mod_true == mod_str);
 	}}}
 	
 	mu_return();

@@ -45,6 +45,10 @@ public:
 	friend BigInt operator/(const BigInt& left, const T& right) { return left / BigInt(right); }
 	friend BigInt operator/(const BigInt& left, const BigInt& right);
 
+	template <typename T>
+	friend BigInt operator%(const BigInt& left, const T& right) { return left % BigInt(right); }
+	friend BigInt operator%(const BigInt& left, const BigInt& right);
+
 	BigInt operator-() const;
 	BigInt operator+() const;
 
@@ -54,6 +58,8 @@ public:
 	friend bool operator<=(const BigInt& left, const BigInt& right);
 	friend bool operator> (const BigInt& left, const BigInt& right);
 	friend bool operator>=(const BigInt& left, const BigInt& right);
+
+
 
 	friend std::ostream& operator <<(std::ostream& out, const BigInt& bn);
 
