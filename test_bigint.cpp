@@ -46,7 +46,7 @@ static int _test_bigint_addition()
 
 	mu_tick();
 	// add lots of random ints, testing all forms of construction
-	for (int i = 0; i < 1000; ++i)
+	for (int i = 0; i < 10000; ++i)
 	{{{  
 		int64_t a = dist(gen) - INT_MAX / 2;
 		int64_t b = dist(gen) - INT_MAX / 2;
@@ -74,7 +74,7 @@ static int _test_bigint_addition()
 	}}}
 
 	// add lost of smaller ints, including some zeros
-	for (int i = 0; i < 1000; ++i)
+	for (int i = 0; i < 10000; ++i)
 	{{{ 
 		int32_t a = dist(gen) % 100;
 		int32_t b = dist(gen) % 100;
@@ -102,7 +102,7 @@ static int _test_bigint_addition()
 	}}}
 
 	// add all complements of 10000 to test for various overflow cases
-	for (int i = 0, j = 1000; i <= 1000; ++i, --j)
+	for (int i = 0, j = 10000; i <= 10000; ++i, --j)
 	{{{
 		BigInt bn_i(i);
 		BigInt bn_j(j);
@@ -115,9 +115,9 @@ static int _test_bigint_addition()
 		std::string diff_int = BigInt(bn_i - i).to_string();
 		std::string diff_str = BigInt(bn_i - std::to_string(i)).to_string();
 
-		mu_assert("1000" == sum_bn);
-		mu_assert("1000" == sum_int);
-		mu_assert("1000" == sum_str);
+		mu_assert("10000" == sum_bn);
+		mu_assert("10000" == sum_int);
+		mu_assert("10000" == sum_str);
 
 		mu_assert("0" == diff_bn);
 		mu_assert("0" == diff_int);
@@ -372,8 +372,8 @@ static int _test_bigint_complex_assignment()
 		BigInt bn_b(b);
 		BigInt bn_c;
 
-		bn_c  = bn_a / bn_b;
-		bn_a /= bn_b;
+		bn_c  = bn_a % bn_b;
+		bn_a %= bn_b;
 		mu_assert(bn_c.to_string() == bn_a.to_string());
 				
 		bn_c  = bn_a + bn_b;
@@ -400,8 +400,8 @@ static int _test_bigint_complex_assignment()
 		bn_a -= bn_b;
 		mu_assert(bn_c.to_string() == bn_a.to_string());	
 
-		bn_c  = bn_a % bn_b;
-		bn_a %= bn_b;
+		bn_c  = bn_a / bn_b;
+		bn_a /= bn_b;
 		mu_assert(bn_c.to_string() == bn_a.to_string());
 		
 	}}}
