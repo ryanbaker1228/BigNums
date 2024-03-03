@@ -3,13 +3,13 @@
 
 
 BigInt& BigInt::operator=(std::string s)
-{{{
+{{{   
 	digits.clear();
 
 	int current_idx = 0;
 
 	if (s[current_idx] == '-' || s[current_idx] == '/')
-	{
+	{ 
 		sign = '-';
 		++current_idx;
 	}
@@ -157,7 +157,28 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 
 BigInt operator/(const BigInt& left, const BigInt& right)
 {{{
-	return 0;	
+	if (right == 0) 	{ 
+		std::cerr << "Warning, attempted division by zero returns zero.\n";
+		return 0;
+	}
+	if (+right > +left) { return 0; }
+
+	BigInt quotient(std::string(left.digits.size(), '0'));
+	BigInt remainder;
+
+	for (int i = 0; i < left.digits.size(); ++i)
+	{{{
+		remainder.digits.push_back(left.digits[i]);
+
+		remainder.trim();
+		while (remainder >= +right)
+		{
+			remainder = remainder - +right;
+			quotient.digits[i] += 1;
+		}
+	}}}
+
+	return quotient.trim() * ((left.sign == right.sign) ? 1 : -1);
 }}}
 
 
@@ -233,5 +254,16 @@ std::ostream& operator<<(std::ostream& out, const BigInt& bn)
 {{{
 	out << bn.to_string();  
 	return out;
+}}}
+
+
+BigInt& BigInt::trim() 
+{{{
+	while (digits.size() > 1 && digits[0] == 0)
+	{
+		digits.pop_front();
+	}
+
+	return *this;
 }}}
 

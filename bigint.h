@@ -16,7 +16,7 @@ private:
 public:
 	BigInt() 
 	{ 
-		sign = '\0';
+		sign = '+';
 		digits.clear();
 	}
 	template <typename T>
@@ -56,6 +56,8 @@ public:
 	friend bool operator>=(const BigInt& left, const BigInt& right);
 
 	friend std::ostream& operator <<(std::ostream& out, const BigInt& bn);
+
+	BigInt& trim();
 };
 
 

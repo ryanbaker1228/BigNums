@@ -245,6 +245,8 @@ static int _test_bigint_division()
 		int64_t a = dist(gen) - INT_MAX / 2;
 		int64_t b = dist(gen) % 200 - 100;
 
+		while (b == 0) { b = dist(gen) % 200 - 100; }
+
 		BigInt bn_a(a);
 		BigInt bn_b(b);
 
@@ -264,13 +266,15 @@ static int _test_bigint_division()
 		int64_t a = dist(gen) % 100;
 		int64_t b = dist(gen) % 100;
 
+		while (b == 0) { b = dist(gen) % 100; }
+
 		BigInt bn_a(a);
 		BigInt bn_b(b);
 
-		std::string div_true = std::to_string(a * b);
-		std::string div_bn   = (bn_a * bn_b).to_string();
-		std::string div_int  = (bn_a * b).to_string();
-		std::string div_str  = (bn_a * std::to_string(b)).to_string();
+		std::string div_true = std::to_string(a / b);
+		std::string div_bn   = (bn_a / bn_b).to_string();
+		std::string div_int  = (bn_a / b).to_string();
+		std::string div_str  = (bn_a / std::to_string(b)).to_string();
 
 		mu_assert(div_true == div_bn);
 		mu_assert(div_true == div_int);

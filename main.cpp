@@ -10,6 +10,9 @@ int main( )
 {{{ 
 	test_bigint_full();		
 
+	BigInt x(-100);
+	BigInt y(13);
+
 	return 0;
 }}}
 
