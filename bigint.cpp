@@ -35,7 +35,7 @@ BigInt& BigInt::operator=(std::string s)
 			std::cerr << "Error converting " << s << " to BigInt.\n";
 		}
 
-		digits.push_back(digit - '0');
+		digits.push_front(digit - '0');
 	}
 	
 	return *this;
@@ -60,7 +60,7 @@ std::string BigInt::to_string() const
 
 	for (int i = 0; i < digits.size(); ++i)
 	{
-		bn_to_s[i+(sign == '-')] += digits[i];
+		bn_to_s[str_length-i-1] += digits[i];
 	}
 
 	return bn_to_s;
@@ -72,38 +72,35 @@ BigInt operator+(const BigInt& left, const BigInt& right)
 	if (+left < +right)   { return right + left; }
 	if (left.sign == '-') { return -(-left + -right); }
 
-	const uint64_t sum_len	 = left.digits.size() + 1;
 	const uint64_t right_len = right.digits.size();
 	const uint64_t left_len  = left.digits.size();
-	const uint64_t delta_len = left.digits.size() - right.digits.size();
 
-	const int left_sign  = left.sign  == '-' ? -1 : 1;
-	const int right_sign = right.sign == '-' ? -1 : 1;
+	const int right_sign = right.sign == '+' ? 1 : -1;
 
 	BigInt sum(0);
 	
-	for (int i = left_len-1; i >= 0; --i)
+	for (int i = 0; i < left_len; ++i)
 	{{{
-		const int right_digit = (i >= delta_len) ? right.digits[i-delta_len] : 0;
-		const int digit_sum   = left_sign * left.digits[i] + right_sign * right_digit;
+		const int right_digit = (i < right_len) ? right.digits[i] : 0;
+		const int digit_sum   = left.digits[i] + right_digit * right_sign;
 
-		sum.digits[0] += digit_sum % 10;
-		sum.digits.push_front(digit_sum / 10);
+		sum.digits[sum.digits.size()-1] += digit_sum % 10;
+		sum.digits.push_back(digit_sum / 10);
 
-		while (sum.digits[1] > 9)
+		while (sum.digits[sum.digits.size()-2] > 9)
 		{
-			sum.digits[1] -= 10;
-			sum.digits[0] += 1;
+			sum.digits[sum.digits.size()-2] -= 10;
+			sum.digits[sum.digits.size()-1] += 1;
 		}
 
-		while (sum.digits[1] < 0)
+		while (sum.digits[sum.digits.size()-2] < 0)
 		{
-			sum.digits[1] += 10;
-			sum.digits[0] -= 1;
+			sum.digits[sum.digits.size()-2] += 10;
+			sum.digits[sum.digits.size()-1] -= 1;
 		}
 	}}}
 	
-	while (sum.digits[0] == 0 && sum.digits.size() > 1) { sum.digits.pop_front(); }
+	while (sum.digits[sum.digits.size()-1] == 0 && sum.digits.size() > 1) { sum.digits.pop_back(); }
 
 	return sum;
 }}}
@@ -125,23 +122,23 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 
 	BigInt product(0);
 	
-	for (int i = right.digits.size()-1; i >= 0; --i)
-	{{{
+	for (int i = 0; i < right.digits.size(); ++i)
+	{{{ 
 		int carry = 0;
 		BigInt current_sum(0);
 
-		for (int j = left.digits.size()-1; j >= 0; --j)
-		{{{
+		for (int j = 0; j < left.digits.size(); ++j)
+		{{{ 
 			int current_product = left.digits[j] * right.digits[i] + carry;
-			current_sum.digits.push_front(current_product % 10);
+			current_sum.digits.push_back(current_product % 10);
 			carry = current_product / 10;
 		}}}
 
-		current_sum.digits.pop_back();
+		current_sum.digits.pop_front();
 
-		if (carry > 0) { current_sum.digits.push_front(carry); }
+		if (carry > 0) { current_sum.digits.push_back(carry); }
 
-		for (int j = right.digits.size()-1; j > i; --j) { current_sum.digits.push_back(0); }
+		for (int j = 0; j < i; ++j) { current_sum.digits.push_front(0); }
 
 		product += current_sum;
 	}}}
@@ -161,19 +158,19 @@ BigInt operator/(const BigInt& left, const BigInt& right)
 	BigInt quotient(std::string(left.digits.size(), '0'));
 	BigInt remainder;
 
-	for (int i = 0; i < left.digits.size(); ++i)
+	for (int i = left.digits.size()-1; i >= 0; --i)
 	{{{
-		remainder.digits.push_back(left.digits[i]);
-		if (remainder.digits[0] == 0) { remainder.digits.pop_front(); }
+		remainder.digits.push_front(left.digits[i]);
+		if (remainder.digits[remainder.digits.size()-1] == 0) { remainder.digits.pop_back(); }
 
 		while (remainder >= +right)
 		{
-			remainder = remainder - +right;
+			remainder -= +right;
 			quotient.digits[i] += 1;
 		}
 	}}}
 
-	while (quotient.digits[0] == 0) { quotient.digits.pop_front(); }
+	while (quotient.digits[quotient.digits.size()-1] == 0) { quotient.digits.pop_back(); }
 	return (left.sign == right.sign ? quotient : -quotient);
 }}}
 
@@ -189,10 +186,10 @@ BigInt operator%(const BigInt& left, const BigInt& right)
 	BigInt quotient(std::string(left.digits.size(), '0'));
 	BigInt remainder;
 
-	for (int i = 0; i < left.digits.size(); ++i)
-	{{{
-		remainder.digits.push_back(left.digits[i]);
-		if (remainder.digits[0] == 0) { remainder.digits.pop_front(); }
+	for (int i = left.digits.size()-1; i >= 0; --i)
+	{{{ 
+		remainder.digits.push_front(left.digits[i]);
+		if (remainder.digits[remainder.digits.size()-1] == 0) { remainder.digits.pop_back(); }
 
 		while (remainder >= +right)
 		{
@@ -249,10 +246,10 @@ bool operator< (const BigInt& left, const BigInt& right)
 	else if (left.sign == '-') 							{ return -right < -left; }
 	else if (left.digits.size() != right.digits.size()) { return left.digits.size() < right.digits.size(); }
 
-	int i = 0;
-	for (; i < left.digits.size() && left.digits[i] == right.digits[i]; ++i) {}
+	int i = left.digits.size() - 1;
+	for (; i >= 0 && left.digits[i] == right.digits[i]; --i) {}
 
-	return !((i == left.digits.size()) || (right.digits[i] < left.digits[i]));
+	return !((i == -1) || (right.digits[i] < left.digits[i]));
 }}}
 
 

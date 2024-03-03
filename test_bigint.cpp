@@ -6,6 +6,7 @@
 
 
 static void test_bigint_full();
+static int _test_bigint_to_string();
 static int _test_bigint_addition();
 static int _test_bigint_negation();
 static int _test_bigint_comparison();
@@ -20,6 +21,7 @@ static void test_bigint_full()
 {{{      
 	auto start = std::chrono::high_resolution_clock::now();
 
+	mu_run(_test_bigint_to_string);
 	mu_run(_test_bigint_addition);
 	mu_run(_test_bigint_negation);
 	mu_run(_test_bigint_comparison);
@@ -38,8 +40,29 @@ static void test_bigint_full()
 }}}
 
 
+static int _test_bigint_to_string()
+{{{     
+	mu_configure();
+
+	std::random_device rd;
+	std::mt19937_64 gen(rd());
+	std::uniform_int_distribution<int32_t> dist;
+
+	mu_tick();
+	for (int i = 0; i < 100000; ++i)
+	{{{  
+		int64_t a = dist(gen) - INT_MAX / 2;
+		BigInt bn_a(a);
+
+		mu_assert(std::to_string(a) == bn_a.to_string());
+	}}}
+
+	mu_return();
+}}}
+
+
 static int _test_bigint_addition() 
-{{{    
+{{{     
 	mu_configure();
 
 	std::random_device rd;
@@ -166,7 +189,6 @@ static int _test_bigint_comparison()
 		BigInt bn_m(m);
 		BigInt bn_n(n);
 
-		mu_set_error_message(std::to_string(m) + " and " + std::to_string(n) + " compared incorrectly." );
 		mu_assert((bn_m >  bn_n) == (m >  n));
 		mu_assert((bn_m >= bn_n) == (m >= n));
 		mu_assert((bn_m <  bn_n) == (m <  n));
@@ -180,7 +202,6 @@ static int _test_bigint_comparison()
 		BigInt bn_i(i);
 		BigInt bn_j(j);
 
-		mu_set_error_message(std::to_string(i) + " and " + std::to_string(j) + " compared incorrectly." );
 		mu_assert((bn_i >  bn_j) == (i >  j));
 		mu_assert((bn_i >= bn_j) == (i >= j));
 		mu_assert((bn_i <  bn_j) == (i <  j));

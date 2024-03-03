@@ -8,8 +8,8 @@
 
 int main()
 {{{ 
-	test_bigint_full();		
-    
+	test_bigint_full();
+
 	return 0;
 }}}
 
