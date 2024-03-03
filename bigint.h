@@ -29,24 +29,10 @@ public:
 	BigInt& operator=(const T& input) { *this = std::to_string(input); return *this; }
 	std::string to_string() const;
 
-	template <typename T>
-	friend BigInt operator+(const BigInt& left, const T& right) { return left + BigInt(right); }
 	friend BigInt operator+(const BigInt& left, const BigInt& right);
-
-	template <typename T>
-	friend BigInt operator-(const BigInt& left, const T& right) { return left - BigInt(right); }
 	friend BigInt operator-(const BigInt& left, const BigInt& right);
-
-	template <typename T>
-	friend BigInt operator*(const BigInt& left, const T& right) { return left * BigInt(right); }
 	friend BigInt operator*(const BigInt& left, const BigInt& right);
-
-	template <typename T>
-	friend BigInt operator/(const BigInt& left, const T& right) { return left / BigInt(right); }
 	friend BigInt operator/(const BigInt& left, const BigInt& right);
-
-	template <typename T>
-	friend BigInt operator%(const BigInt& left, const T& right) { return left % BigInt(right); }
 	friend BigInt operator%(const BigInt& left, const BigInt& right);
 
 	BigInt operator-() const;
