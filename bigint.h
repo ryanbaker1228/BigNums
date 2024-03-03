@@ -37,6 +37,11 @@ public:
 
 	BigInt operator-() const;
 	BigInt operator+() const;
+	
+	BigInt& operator++() { *this += 1; return *this; }
+	BigInt  operator++(int) { BigInt r(*this); ++(*this); return r; }
+	BigInt& operator--() { *this -= 1; return *this; }
+	BigInt  operator--(int) { BigInt r(*this); --(*this); return r; }
 
 	friend bool operator==(const BigInt& left, const BigInt& right);
 	friend bool operator!=(const BigInt& left, const BigInt& right);
@@ -51,7 +56,7 @@ public:
 	friend BigInt operator/=(BigInt& left, const BigInt& right);
 	friend BigInt operator%=(BigInt& left, const BigInt& right);
 
-	friend std::ostream& operator <<(std::ostream& out, const BigInt& bn);
+	friend std::ostream& operator<<(std::ostream& out, const BigInt& bn);
 };
 
 

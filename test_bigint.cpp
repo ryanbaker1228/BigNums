@@ -13,10 +13,11 @@ static int _test_bigint_multiplication();
 static int _test_bigint_division();
 static int _test_bigint_modulus();
 static int _test_bigint_complex_assignment();
+static int _test_bigint_increment();
 
 
 static void test_bigint_full()
-{{{     
+{{{      
 	auto start = std::chrono::high_resolution_clock::now();
 
 	mu_run(_test_bigint_addition);
@@ -26,6 +27,7 @@ static void test_bigint_full()
 	mu_run(_test_bigint_division);
 	mu_run(_test_bigint_modulus);
 	mu_run(_test_bigint_complex_assignment);
+	mu_run(_test_bigint_increment);
 
 	auto end = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
@@ -408,4 +410,45 @@ static int _test_bigint_complex_assignment()
 
 	mu_return();
 }}}
+
+
+static int _test_bigint_increment()
+{{{    
+	mu_configure();
+
+	std::random_device rd;
+	std::mt19937_64 gen(rd());
+	std::uniform_int_distribution<int32_t> dist;
+
+	mu_tick();
+	// add lots of random ints, testing all forms of construction
+	for (int i = 0; i < 10000; ++i)
+	{{{  
+		int32_t a = dist(gen) - INT_MAX / 2;
+		int32_t b = dist(gen) - INT_MAX / 2;
+
+		BigInt bn_a(a);
+		BigInt bn_b(b);
+
+		std::string inc_true = std::to_string(++a);
+		std::string inc_bn   = (++bn_a).to_string();
+		a++; bn_a++;
+		std::string true_inc = std::to_string(a);
+		std::string bn_inc   = bn_a.to_string();
+
+		std::string dec_true = std::to_string(--a);
+		std::string dec_bn   = (--bn_a).to_string();
+		b++; bn_b++;
+		std::string true_dec = std::to_string(b);
+		std::string bn_dec   = bn_b.to_string();
+
+		mu_assert(inc_true == inc_bn);
+		mu_assert(dec_true == dec_bn);
+		mu_assert(true_dec == bn_dec);
+		mu_assert(true_inc == bn_inc);
+	}}}
+
+	mu_return();
+}}}
+
 

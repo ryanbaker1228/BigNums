@@ -1,0 +1,14 @@
+1
+[32mTest passed:            _test_bigint_addition in 0.11148 seconds.[0m
+[32mTest passed:            _test_bigint_negation in 0.00198013 seconds.[0m
+[32mTest passed:          _test_bigint_comparison in 0.00569796 seconds.[0m
+[32mTest passed:      _test_bigint_multiplication in 0.0223962 seconds.[0m
+[32mTest passed:            _test_bigint_division in 0.0423103 seconds.[0m
+[32mTest passed:             _test_bigint_modulus in 0.0463671 seconds.[0m
+[32mTest passed:  _test_bigint_complex_assignment in 0.0552922 seconds.[0m
+[31mTest failed:           _test_bigint_increment at line 439. (inc_true == inc_bn) is false.[0m
+
+301054 microseconds
+301.054 milliseconds
+0.301054 seconds
+
