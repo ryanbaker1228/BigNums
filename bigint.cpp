@@ -3,12 +3,12 @@
 
 
 BigInt& BigInt::operator=(std::string s)
-{{{   
+{{{    
 	digits.clear();
 
 	int current_idx = 0;
 
-	if (s[current_idx] == '-' || s[current_idx] == '/')
+	if (s[current_idx] == '-')
 	{ 
 		sign = '-';
 		++current_idx;
@@ -32,12 +32,12 @@ BigInt& BigInt::operator=(std::string s)
 		char digit = s[current_idx];
 
 		if ('0' > digit || digit > '9') {
-			std::cerr << "Error converting " << s << " to BigInt.\n";
+			std::cerr << "Error, " << s << " cannot be converted to BigInt.\n";
 		}
 
 		digits.push_front(digit - '0');
 	}
-	
+
 	return *this;
 }}}
 
@@ -84,18 +84,18 @@ BigInt operator+(const BigInt& left, const BigInt& right)
 		const int right_digit = (i < right_len) ? right.digits[i] : 0;
 		const int digit_sum   = left.digits[i] + right_digit * right_sign;
 
-		sum.digits[sum.digits.size()-1] += digit_sum % 10;
-		sum.digits.push_back(digit_sum / 10);
+		sum.digits[sum.digits.size()-1] += digit_sum % BigInt::base;
+		sum.digits.push_back(digit_sum / BigInt::base);
 
-		while (sum.digits[sum.digits.size()-2] > 9)
+		while (sum.digits[sum.digits.size()-2] >= BigInt::base)
 		{
-			sum.digits[sum.digits.size()-2] -= 10;
+			sum.digits[sum.digits.size()-2] -= BigInt::base;
 			sum.digits[sum.digits.size()-1] += 1;
 		}
 
 		while (sum.digits[sum.digits.size()-2] < 0)
 		{
-			sum.digits[sum.digits.size()-2] += 10;
+			sum.digits[sum.digits.size()-2] += BigInt::base;
 			sum.digits[sum.digits.size()-1] -= 1;
 		}
 	}}}
@@ -130,8 +130,8 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 		for (int j = 0; j < left.digits.size(); ++j)
 		{{{ 
 			int current_product = left.digits[j] * right.digits[i] + carry;
-			current_sum.digits.push_back(current_product % 10);
-			carry = current_product / 10;
+			current_sum.digits.push_back(current_product % BigInt::base);
+			carry = current_product / BigInt::base;
 		}}}
 
 		current_sum.digits.pop_front();
@@ -148,7 +148,7 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 
 
 BigInt operator/(const BigInt& left, const BigInt& right)
-{{{
+{{{ 
 	if (right == 0) 	{ 
 		std::cerr << "Warning, attempted division by zero returns zero.\n";
 		return 0;
@@ -159,7 +159,7 @@ BigInt operator/(const BigInt& left, const BigInt& right)
 	BigInt remainder;
 
 	for (int i = left.digits.size()-1; i >= 0; --i)
-	{{{
+	{{{  
 		remainder.digits.push_front(left.digits[i]);
 		if (remainder.digits[remainder.digits.size()-1] == 0) { remainder.digits.pop_back(); }
 
@@ -310,5 +310,13 @@ std::ostream& operator<<(std::ostream& out, const BigInt& bn)
 {{{
 	out << bn.to_string();  
 	return out;
+}}}
+
+
+BigInt& BigInt::reset()
+{{{
+	digits.clear();
+	sign = '+';
+	return *this;
 }}}
 

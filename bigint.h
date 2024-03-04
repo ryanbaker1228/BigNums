@@ -10,8 +10,10 @@
 class BigInt 
 {
 private:
-	std::deque<char> digits;
-	char			 sign;
+	std::deque<int8_t> digits;
+	char sign;
+
+	static const int base = 10;
 
 public:
 	BigInt() 
@@ -38,9 +40,9 @@ public:
 	BigInt operator-() const;
 	BigInt operator+() const;
 	
-	BigInt& operator++() { *this += 1; return *this; }
+	BigInt& operator++() 	{ *this += 1; return *this; }
 	BigInt  operator++(int) { BigInt r(*this); ++(*this); return r; }
-	BigInt& operator--() { *this -= 1; return *this; }
+	BigInt& operator--() 	{ *this -= 1; return *this; }
 	BigInt  operator--(int) { BigInt r(*this); --(*this); return r; }
 
 	friend bool operator==(const BigInt& left, const BigInt& right);
@@ -57,6 +59,11 @@ public:
 	friend BigInt operator%=(BigInt& left, const BigInt& right);
 
 	friend std::ostream& operator<<(std::ostream& out, const BigInt& bn);
+
+	BigInt& reset();
+
+	void set_sign(const char s) { sign = s; }
+	char get_sign() const		{ return sign; }
 };
 
 

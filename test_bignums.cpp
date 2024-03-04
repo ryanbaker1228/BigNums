@@ -16,6 +16,9 @@ static int _test_bigint_modulus();
 static int _test_bigint_complex_assignment();
 static int _test_bigint_increment();
 
+static void test_bigfloat_full();
+static int _test_bigfloat_to_string();
+
 
 static void test_bigint_full()
 {{{      

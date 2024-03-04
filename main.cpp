@@ -1,7 +1,8 @@
 #include <chrono>
 
 #include "bigint.h"
-#include "test_bigint.cpp"
+#include "bigfloat.h"
+#include "test_bignums.cpp"
 #include "miniunit.h"
 
 
