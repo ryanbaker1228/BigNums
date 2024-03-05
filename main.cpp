@@ -1,15 +1,15 @@
 #include <chrono>
 
 #include "bigint.h"
-#include "bigfloat.h"
-#include "test_bignums.cpp"
+#include "test_bignums.h"
 #include "miniunit.h"
 
 
 
 int main()
-{{{ 
-	test_bigint_full();
+ {{{ 
+ 	TestBigInt::full();
+	BenchmarkBigInt::full();
 
 	return 0;
 }}}

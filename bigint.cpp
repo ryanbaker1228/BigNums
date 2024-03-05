@@ -2,6 +2,23 @@
 
 
 
+BigInt::BigInt(int input)
+{{{
+	sign = '+';
+	if (input < 0)
+	{
+		sign = '-';
+		input = -input;
+	}
+
+	do 
+	{
+		digits.push_back(input % BigInt::base);
+		input /= BigInt::base;
+	} while (input);
+}}}
+
+
 BigInt& BigInt::operator=(std::string s)
 {{{    
 	digits.clear();
@@ -25,18 +42,24 @@ BigInt& BigInt::operator=(std::string s)
 	else
 	{
 		std::cerr << "Error, " << s << " cannot be converted to BigInt.\n";
-	}		
+	}	
+	
+	for (; s[current_idx] == '0' && s[current_idx+1] != '\0'; current_idx++);
 
-	for (; s[current_idx] != '\0'; ++current_idx)
+	s = s.substr(current_idx);
+
+	const int lzcnt = BigInt::digits_per_base_unit - (s.length() % BigInt::digits_per_base_unit);
+	
+	if (lzcnt < BigInt::digits_per_base_unit) { s = std::string(lzcnt, '0') + s; }
+	
+	for (int i = 0; s[i] != '\0'; i += BigInt::digits_per_base_unit)
 	{
-		char digit = s[current_idx];
+		BigInt::digit_type digit = stoi(s.substr(i, BigInt::digits_per_base_unit));
 
-		if ('0' > digit || digit > '9') {
-			std::cerr << "Error, " << s << " cannot be converted to BigInt.\n";
-		}
-
-		digits.push_front(digit - '0');
+		digits.push_front(digit);
 	}
+
+	if (digits.back() == 0) { sign = '+'; }
 
 	return *this;
 }}}
@@ -52,18 +75,16 @@ BigInt& BigInt::operator=(const char *s)
 
 std::string BigInt::to_string() const
 {{{
-	const int str_length = digits.size() + (sign == '-');
+	std::ostringstream bn_to_s;
 
-	std::string bn_to_s(str_length, '0');
-
-	if (sign == '-') { bn_to_s[0] = sign; }
-
-	for (int i = 0; i < digits.size(); ++i)
+	if (sign == '-') { bn_to_s << sign; }
+	bn_to_s << digits.back();
+	for (int i = digits.size()-2; i >= 0; --i)
 	{
-		bn_to_s[str_length-i-1] += digits[i];
+		bn_to_s << std::setw(BigInt::digits_per_base_unit) << std::setfill('0') << digits[i];
 	}
 
-	return bn_to_s;
+	return bn_to_s.str();
 }}}
 
 
@@ -81,8 +102,8 @@ BigInt operator+(const BigInt& left, const BigInt& right)
 	
 	for (int i = 0; i < left_len; ++i)
 	{{{
-		const int right_digit = (i < right_len) ? right.digits[i] : 0;
-		const int digit_sum   = left.digits[i] + right_digit * right_sign;
+		const BigInt::digit_type right_digit = (i < right_len) ? right.digits[i] : 0;
+		const int64_t digit_sum = left.digits[i] + right_digit * right_sign;
 
 		sum.digits[sum.digits.size()-1] += digit_sum % BigInt::base;
 		sum.digits.push_back(digit_sum / BigInt::base);
@@ -100,7 +121,7 @@ BigInt operator+(const BigInt& left, const BigInt& right)
 		}
 	}}}
 	
-	while (sum.digits[sum.digits.size()-1] == 0 && sum.digits.size() > 1) { sum.digits.pop_back(); }
+	while (sum.digits.back() == 0 && sum.digits.size() > 1) { sum.digits.pop_back(); }
 
 	return sum;
 }}}
@@ -149,19 +170,22 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 
 BigInt operator/(const BigInt& left, const BigInt& right)
 {{{ 
-	if (right == 0) 	{ 
+	if (right == 0) 	
+	{ 
 		std::cerr << "Warning, attempted division by zero returns zero.\n";
 		return 0;
 	}
 	if (+right > +left) { return 0; }
 
-	BigInt quotient(std::string(left.digits.size(), '0'));
+	BigInt quotient(0);
 	BigInt remainder;
+
+	for (int i = 0; i < left.digits.size(); ++i) { quotient.digits.push_back(0); }
 
 	for (int i = left.digits.size()-1; i >= 0; --i)
 	{{{  
 		remainder.digits.push_front(left.digits[i]);
-		if (remainder.digits[remainder.digits.size()-1] == 0) { remainder.digits.pop_back(); }
+		if (remainder.digits.back() == 0) { remainder.digits.pop_back(); }
 
 		while (remainder >= +right)
 		{
@@ -170,17 +194,19 @@ BigInt operator/(const BigInt& left, const BigInt& right)
 		}
 	}}}
 
-	while (quotient.digits[quotient.digits.size()-1] == 0) { quotient.digits.pop_back(); }
+	while  (quotient.digits.back() == 0) { quotient.digits.pop_back(); }
 	return (left.sign == right.sign ? quotient : -quotient);
 }}}
 
 
 BigInt operator%(const BigInt& left, const BigInt& right)
 {{{
-	if (right == 0) 	{ 
+	if (right == 0) 	
+	{ 
 		std::cerr << "Warning, attempted modulus division by zero returns zero.\n";
 		return 0;
 	}
+
 	if (right > +left) { return left * (left.sign == '+' ? 1 : -1); }
 
 	BigInt quotient(std::string(left.digits.size(), '0'));
@@ -189,7 +215,7 @@ BigInt operator%(const BigInt& left, const BigInt& right)
 	for (int i = left.digits.size()-1; i >= 0; --i)
 	{{{ 
 		remainder.digits.push_front(left.digits[i]);
-		if (remainder.digits[remainder.digits.size()-1] == 0) { remainder.digits.pop_back(); }
+		if (remainder.digits.back() == 0) { remainder.digits.pop_back(); }
 
 		while (remainder >= +right)
 		{

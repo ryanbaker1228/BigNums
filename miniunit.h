@@ -80,26 +80,27 @@ miniunit_block(\
 )
 
 
-static void mu_set_error_message(const std::string message)
-{{{
-	if (miniunit_line != 0) { return; }
+#define mu_set_error_message(message)\
+miniunit_block(\
+	if (miniunit_line == 0)\
+	{\
+		miniunit_message = message;\
+		miniunit_custom_message = true;\
+	}\
+)
 
-	miniunit_custom_message	= true;
-	miniunit_message = message;
-}}}
 
-
-static void mu_notify_success(const std::string test_name, const double elapsed_time)
-{{{
+#define mu_notify_success(test_name, elapsed_time)\
+miniunit_block(\
 	std::cout << "\x1b[32m" << "Test passed: " << std::setw(32) << test_name << " in " << elapsed_time << " seconds."  << "\x1b[0m\n";\
-}}}
+)
 
 
-static void mu_notify_failure(const std::string test_name, const int line_number, const std::string error_message)
-{{{  
-	std::cout << "\x1b[31m" << "Test failed: " << std::setw(32) << test_name << " at line " << line_number << ". "   
-			  << error_message << "\x1b[0m\n";
-}}}
+#define mu_notify_failure(test_name, line_number, error_message)\
+miniunit_block(\
+	std::cout << "\x1b[31m" << "Test failed: " << std::setw(32) << test_name << " at line " << line_number << ". "\
+			  << error_message << "\x1b[0m\n";\
+)
 
 
 

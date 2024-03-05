@@ -2,6 +2,8 @@
 #define BIGINT_H_INCLUDED
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <string>
 #include <deque>
 
@@ -10,10 +12,13 @@
 class BigInt 
 {
 private:
-	std::deque<int8_t> digits;
+	typedef int digit_type;
+
+	std::deque<BigInt::digit_type> digits;
 	char sign;
 
-	static const int base = 10;
+	static const BigInt::digit_type base = 10;
+	static const int digits_per_base_unit = 1; // log10 of base
 
 public:
 	BigInt() 
@@ -21,6 +26,7 @@ public:
 		sign = '+';
 		digits.clear();
 	}
+	BigInt(int input);
 	template <typename T>
 	BigInt(const T& input) { *this = input; }
 
@@ -62,8 +68,8 @@ public:
 
 	BigInt& reset();
 
-	void set_sign(const char s) { sign = s; }
-	char get_sign() const		{ return sign; }
+	inline void set_sign(const char s) { sign = s; }
+	inline char get_sign() const	   { return sign; }
 };
 
 
