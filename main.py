@@ -2,12 +2,11 @@ import time
 
 
 start = time.time()
-end = start + 1
 
-num_additions = 0
-x: int = 0
-while (time.time() < end):
-	x += num_additions
-	num_additions += 1
+x: int = 1
 
-print("{} completed in {} seconds".format(num_additions, 1))
+for i in range(2000, 0, -1):
+	x: int = x * i
+
+end = time.time()
+print(end-start)

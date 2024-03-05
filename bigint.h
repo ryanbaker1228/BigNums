@@ -17,8 +17,8 @@ private:
 	std::deque<BigInt::digit_type> digits;
 	char sign;
 
-	static const BigInt::digit_type base = 10;
-	static const int digits_per_base_unit = 1; // log10 of base
+	static const BigInt::digit_type base = 10000;
+	static const int digits_per_base_unit = 4; // log10 of base
 
 public:
 	BigInt() 

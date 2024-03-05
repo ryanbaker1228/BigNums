@@ -23,7 +23,8 @@ namespace BenchmarkBigInt
 {
 	void full();
 
-	void addition(int time);
+	void addition();
+	void multiplication();
 }
 
 

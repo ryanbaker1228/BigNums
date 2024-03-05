@@ -461,24 +461,47 @@ int TestBigInt::increment()
 
 
 void BenchmarkBigInt::full()
-{{{
-	BenchmarkBigInt::addition(1);
+{{{ 
+	BenchmarkBigInt::addition();
+	BenchmarkBigInt::multiplication();
 }}}
 
 
-void BenchmarkBigInt::addition(int time)
+void BenchmarkBigInt::addition()
 {{{
 	int	num_additions = 0;
 	BigInt bn(0);
 
-	for (auto start = std::chrono::high_resolution_clock::now(), now = start;
-		 now < start + std::chrono::seconds{time};
-		 now = std::chrono::steady_clock::now())
+	auto start = std::chrono::high_resolution_clock::now();
+
+	for (int i = 0; i < 100000; ++i) 
 	{
 		bn += num_additions;
 		++num_additions;
 	}
 
-	std::cout << num_additions << " additions completed in " << time << " seconds.\n";
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+	std::cout << (1e9 * double(num_additions) / duration.count()) << " additions completed per second.\n";
+}}}
+
+
+void BenchmarkBigInt::multiplication()
+{{{
+	int factorial = 2000;
+	BigInt bn(1);
+
+	auto start = std::chrono::high_resolution_clock::now();
+
+	for (int i = factorial; i > 1; --i)
+	{{{
+		bn *= i;
+	}}}
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+	std::cout << factorial << "! calculated in " << (duration.count() / 1e9) << " seconds.\n";
 }}}
 
