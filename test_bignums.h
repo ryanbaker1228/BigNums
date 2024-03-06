@@ -4,28 +4,13 @@
 
 
 namespace TestBigInt
-{ 
-	void full();
-
-	int to_string();
-	int addition();
-	int negation();
-	int comparison();
-	int multiplication();
-	int division();
-	int modulus();
-	int complex_assignment();
-	int increment();
-}
-
-
-namespace BenchmarkBigInt
 {
-	void full();
+	void full_suite();
 
-	void addition();
-	void multiplication();
-}
+	int negation();
+	int relationals();
+	int addition();
+} // namespace TestBigInt
 
 
 

@@ -1,75 +1,103 @@
 #ifndef BIGINT_H_INCLUDED
 #define BIGINT_H_INCLUDED
 
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <string>
 #include <deque>
+#include <iostream>
+#include <string>
 
 
 
-class BigInt 
+class BigInt
 {
-private:
-	typedef int digit_type;
+public:
+	std::deque<uint32_t> digits;
+	bool sign; // 0 = positive; 1 = negative
 
-	std::deque<BigInt::digit_type> digits;
-	char sign;
-
-	static const BigInt::digit_type base = 10000;
-	static const int digits_per_base_unit = 4; // log10 of base
+	static constexpr uint32_t base = 1 << 30;
 
 public:
-	BigInt() 
-	{ 
-		sign = '+';
-		digits.clear();
-	}
-	BigInt(int input);
-	template <typename T>
-	BigInt(const T& input) { *this = input; }
-
-	BigInt& operator=(std::string s);
-	BigInt& operator=(const char *s);
-
-	template <typename T>
-	BigInt& operator=(const T& input) { *this = std::to_string(input); return *this; }
-	std::string to_string() const;
-
-	friend BigInt operator+(const BigInt& left, const BigInt& right);
-	friend BigInt operator-(const BigInt& left, const BigInt& right);
-	friend BigInt operator*(const BigInt& left, const BigInt& right);
-	friend BigInt operator/(const BigInt& left, const BigInt& right);
-	friend BigInt operator%(const BigInt& left, const BigInt& right);
-
-	BigInt operator-() const;
-	BigInt operator+() const;
+	BigInt();
+	BigInt(int64_t n);
+	//BigInt(std::string s);
 	
-	BigInt& operator++() 	{ *this += 1; return *this; }
-	BigInt  operator++(int) { BigInt r(*this); ++(*this); return r; }
-	BigInt& operator--() 	{ *this -= 1; return *this; }
-	BigInt  operator--(int) { BigInt r(*this); --(*this); return r; }
+	//BigInt& operator=(std::string s);
+	//BigInt& operator=(const char* s);
+	//BigInt& operator=(int n);
 
+	//// Addition
+	friend BigInt operator+(const BigInt& addend_1, const BigInt& addend_2);
+	//friend BigInt operator+(const BigInt& addend_1, const int addend_2);
+	//friend BigInt operator+=(BigInt& addend_1, const BigInt& addend_2);
+	//friend BigInt operator+=(BigInt& addend_1, const int addend_2);
+
+	//// Subtraction
+	//friend BigInt operator-(const BigInt& minuend, const BigInt& subtrahend);
+	//friend BigInt operator-(const BigInt& minuend, const int subtrahend);
+	//friend BigInt operator-=(BigInt& minuend, const BigInt& subtrahend);
+	//friend BigInt operator-=(BigInt& minuend, const int subtrahend);
+
+	//// Multiplication
+	//friend BigInt operator*(const BigInt& factor_1, const BigInt& factor_2);
+	//friend BigInt operator*(const BigInt& factor_1, const int factor_2);
+	//friend BigInt operator*=(BigInt& factor_1, const BigInt& factor_2);
+	//friend BigInt operator*=(BigInt& factor_1, const int factor_2);
+
+	//// Division
+	//friend BigInt operator/(const BigInt& dividend, const BigInt& divisor);
+	//friend BigInt operator/(const BigInt& dividend, const int divisor);
+	//friend BigInt operator/=(BigInt& dividend, const BigInt& divisor);
+	//friend BigInt operator/=(BigInt& dividend, const int divisor);
+
+	//// Modulus
+	//friend BigInt operator%(const BigInt& dividend, const BigInt& modulus);
+	//friend BigInt operator%(const BigInt& dividend, const int modulus);
+	//friend BigInt operator%=(BigInt& dividend, const BigInt& modulus);
+	//friend BigInt operator%=(BigInt& dividend, const int modulus);
+
+	//// Unary
+	BigInt operator-() const;
+	//BigInt operator+() const;
+
+	//// Increment / Decrement
+	//BigInt& operator++();
+	//BigInt& operator--();
+	//BigInt operator++(int);
+	//BigInt operator--(int);
+
+	//// Or
+	//friend BigInt operator|(const BigInt& bn, const BigInt& mask);
+	//friend BigInt operator|=(BigInt& bn, const BigInt& mask);
+
+	//// And
+	//friend BigInt operator&(const BigInt& bn, const BigInt& mask);
+	//friend BigInt operator&=(BigInt& bn, const BigInt& mask);
+
+	//// Xor
+	//friend BigInt operator^(const BigInt& bn, const BigInt& mask);
+	//friend BigInt operator^=(BigInt& bn, const BigInt& mask);
+
+	//// Not
+	//friend BigInt operator~(const BigInt& bn);
+
+	//// Bitshift
+	//friend BigInt operator<<(const BigInt& bn, const int shift);
+	//friend BigInt operator>>(const BigInt& bn, const int shift);
+	//friend BigInt operator<<=(BigInt& bn, const int shift);
+	//friend BigInt operator>>=(BigInt& bn, const int shift);
+
+	//// Relationals
 	friend bool operator==(const BigInt& left, const BigInt& right);
 	friend bool operator!=(const BigInt& left, const BigInt& right);
-	friend bool operator< (const BigInt& left, const BigInt& right);
-	friend bool operator<=(const BigInt& left, const BigInt& right);
 	friend bool operator> (const BigInt& left, const BigInt& right);
 	friend bool operator>=(const BigInt& left, const BigInt& right);
+	friend bool operator< (const BigInt& left, const BigInt& right);
+	friend bool operator<=(const BigInt& left, const BigInt& right);
 
-	friend BigInt operator+=(BigInt& left, const BigInt& right);
-	friend BigInt operator-=(BigInt& left, const BigInt& right);
-	friend BigInt operator*=(BigInt& left, const BigInt& right);
-	friend BigInt operator/=(BigInt& left, const BigInt& right);
-	friend BigInt operator%=(BigInt& left, const BigInt& right);
-
-	friend std::ostream& operator<<(std::ostream& out, const BigInt& bn);
-
-	BigInt& reset();
-
-	inline void set_sign(const char s) { sign = s; }
-	inline char get_sign() const	   { return sign; }
+	//// I/O
+	//std::string to_string() const;
+	//friend std::ostream& operator<<(std::ostream& out, const BigInt& bn);
+	//friend std::istream& operator>>(std::istream& in , const BigInt& bn);
+	void disect();
 };
 
 
