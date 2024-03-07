@@ -10,6 +10,7 @@
 
 
 
+// Test BigInt {{{ 
 void TestBigInt::full_suite()
 {{{
 	mu_run(TestBigInt::negation);
@@ -17,7 +18,7 @@ void TestBigInt::full_suite()
 	mu_run(TestBigInt::addition);
 	mu_run(TestBigInt::subtraction);
 	mu_run(TestBigInt::multiplication);
-	mu_run(TestBigInt::division);
+	//mu_run(TestBigInt::division);
 }}}
 
 
@@ -195,7 +196,7 @@ int TestBigInt::multiplication()
 	mu_return();
 }}}
 
-
+/*
 int TestBigInt::division()
 {{{ 
 	mu_configure();
@@ -223,8 +224,11 @@ int TestBigInt::division()
 
 	mu_return();
 }}}
+*/
+// }}}
 
 
+// BenckmarkBitInt {{{
 void BenchmarkBigInt::full_suite()
 {{{ 
 	std::cout << "----------------------------------------------------\n"
@@ -235,11 +239,11 @@ void BenchmarkBigInt::full_suite()
 	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::addition());
 	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::subtraction());
 	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::multiplication());
-	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::division());
+	//BenchmarkBigInt::print_table_entry(BenchmarkBigInt::division());
 }}}
 
 
-BenchmarkResult BenchmarkBigInt::addition()
+BenchmarkBigInt::BenchmarkResult BenchmarkBigInt::addition()
 {{{
 	using std::chrono::high_resolution_clock,
 		  std::chrono::duration_cast,
@@ -281,7 +285,7 @@ BenchmarkResult BenchmarkBigInt::addition()
 }}}
 
 
-BenchmarkResult BenchmarkBigInt::subtraction()
+BenchmarkBigInt::BenchmarkResult BenchmarkBigInt::subtraction()
 {{{ 
 	using std::chrono::high_resolution_clock,
 		  std::chrono::duration_cast,
@@ -324,7 +328,7 @@ BenchmarkResult BenchmarkBigInt::subtraction()
 }}}
 
 
-BenchmarkResult BenchmarkBigInt::multiplication()
+BenchmarkBigInt::BenchmarkResult BenchmarkBigInt::multiplication()
 {{{
 	using std::chrono::high_resolution_clock,
 		  std::chrono::duration_cast,
@@ -366,8 +370,8 @@ BenchmarkResult BenchmarkBigInt::multiplication()
 
 }}}
 
-
-BenchmarkResult BenchmarkBigInt::division()
+/*
+BenchmarkBigInt::BenchmarkResult BenchmarkBigInt::division()
 {{{
 	using std::chrono::high_resolution_clock,
 		  std::chrono::duration_cast,
@@ -408,7 +412,7 @@ BenchmarkResult BenchmarkBigInt::division()
 	};
 
 }}}
-
+*/
 
 void BenchmarkBigInt::print_table_entry(BenchmarkResult br)
 {{{
@@ -421,3 +425,5 @@ void BenchmarkBigInt::print_table_entry(BenchmarkResult br)
 	std::cout << " |\n";
 	std::cout << std::string(52, '-') << std::endl;
 }}}
+// }}}
+

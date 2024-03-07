@@ -52,24 +52,23 @@ BigInt operator+(const BigInt& addend_1, const BigInt& addend_2)
 	for (; i < std::min(addend_1.digits.size(), addend_2.digits.size()); ++i)
 	{
 		int digit_sum = addend_1.digits[i] + addend_2.digits[i] + carry;
-		sum.digits.push_back(digit_sum % BigInt::base);
-		carry = digit_sum / BigInt::base;
+		sum.digits.push_back(digit_sum & BigInt::base_mask);
+		carry = digit_sum >> BigInt::log2_base;
 	}
 
 	for (; i < addend_1.digits.size(); ++i)
 	{
 		int digit_sum = addend_1.digits[i] + carry;
-		sum.digits.push_back(digit_sum % BigInt::base);
-		carry = digit_sum / BigInt::base;
+		sum.digits.push_back(digit_sum & BigInt::base_mask);
+		carry = digit_sum >> BigInt::log2_base;
 	}
 
 	for (; i < addend_2.digits.size(); ++i)
 	{
 		int digit_sum = addend_2.digits[i] + carry;
-		sum.digits.push_back(digit_sum % BigInt::base);
-		carry = digit_sum / BigInt::base;
+		sum.digits.push_back(digit_sum & BigInt::base_mask);
+		carry = digit_sum >> BigInt::log2_base;
 	}
-
 
 	if (carry) { sum.digits.push_back(carry); }
 
@@ -147,7 +146,7 @@ BigInt operator-(const BigInt& minuend, const BigInt& subtrahend)
 
 //// Multiplication
 BigInt operator*(const BigInt& factor_1, const BigInt& factor_2)
-{{{
+{{{ 
 	BigInt prod(0);
 
 	for (int i = 0; i < factor_2.digits.size(); ++i)
@@ -157,7 +156,9 @@ BigInt operator*(const BigInt& factor_1, const BigInt& factor_2)
 
 		for (int j = 0; j < factor_1.digits.size(); ++j)
 		{
-			uint64_t current_prod = uint64_t(factor_1.digits[j]) * uint64_t(factor_2.digits[i]) + carry;
+			uint64_t current_prod = uint64_t(factor_1.digits[j])
+								  * uint64_t(factor_2.digits[i]) 
+								  + carry;
 			current_sum.digits.push_back(current_prod % BigInt::base);
 			carry = current_prod / BigInt::base;
 		}
@@ -203,7 +204,10 @@ BigInt operator/(const BigInt& dividend, const BigInt& divisor)
 	BigInt quotient(0);
 	BigInt remainder;
 
-	for (int i = 0; i < dividend.digits.size(); ++i) { quotient.digits.push_back(0); }
+	for (int i = 0; i < dividend.digits.size(); ++i) 
+	{
+		quotient.digits.push_back(0); 
+	}
 
 	for (int i = dividend.digits.size()-1; i >= 0; --i)
 	{

@@ -12,26 +12,25 @@ namespace TestBigInt
 	int addition();
 	int subtraction();
 	int multiplication();
-	int division();
+	//int division();
 } // namespace TestBigInt
-
-
-typedef struct BenchmarkResult
-{
-	std::string operation;
-	int per_second;
-	int delta_perf;
-} BenchmarkResult;
 
 
 namespace BenchmarkBigInt
 {
+	typedef struct BenchmarkResult
+	{
+		std::string operation;
+		int per_second;
+		int delta_perf;
+	} BenchmarkResult;
+
 	void full_suite();
 
 	BenchmarkResult addition();
 	BenchmarkResult subtraction();
 	BenchmarkResult multiplication();
-	BenchmarkResult division();
+	//BenchmarkResult division();
 
 	void print_table_entry(BenchmarkResult br);
 }

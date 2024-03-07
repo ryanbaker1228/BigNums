@@ -14,6 +14,8 @@ private:
 	bool sign; // 0 = positive; 1 = negative
 
 	static constexpr uint32_t base = 1 << 30;
+	static constexpr uint32_t base_mask = BigInt::base - 1;
+	static constexpr uint32_t log2_base = 30;
 
 public:
 	BigInt();
