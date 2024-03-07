@@ -44,17 +44,12 @@ BigInt::BigInt(int64_t n)
 
 //// Addition
 BigInt operator+(const BigInt& addend_1, const BigInt& addend_2)
-{{{
-	if (addend_1.digits.size() < addend_2.digits.size())
-	{
-		return addend_2 + addend_1;
-	}
-
+{{{   
 	BigInt sum;
 	int carry = 0;
 	int i = 0;
 
-	for (; i < addend_2.digits.size(); ++i)
+	for (; i < std::min(addend_1.digits.size(), addend_2.digits.size()); ++i)
 	{
 		int digit_sum = addend_1.digits[i] + addend_2.digits[i] + carry;
 		sum.digits.push_back(digit_sum % BigInt::base);
@@ -67,6 +62,14 @@ BigInt operator+(const BigInt& addend_1, const BigInt& addend_2)
 		sum.digits.push_back(digit_sum % BigInt::base);
 		carry = digit_sum / BigInt::base;
 	}
+
+	for (; i < addend_2.digits.size(); ++i)
+	{
+		int digit_sum = addend_2.digits[i] + carry;
+		sum.digits.push_back(digit_sum % BigInt::base);
+		carry = digit_sum / BigInt::base;
+	}
+
 
 	if (carry) { sum.digits.push_back(carry); }
 
@@ -90,9 +93,41 @@ BigInt operator+(const BigInt& addend_1, const BigInt& addend_2)
 
 
 //// Subtraction
-//BigInt operator-(const BigInt& minuend, const BigInt& subtrahend)
-//{{{
-//}}}
+BigInt operator-(const BigInt& minuend, const BigInt& subtrahend)
+{{{
+	if (minuend < subtrahend)
+	{
+		return -(subtrahend - minuend);
+	}
+	if (minuend < 0)
+	{
+		return -(-minuend - -subtrahend);
+	}
+	if (subtrahend < 0)
+	{
+		return (minuend + -subtrahend);
+	}
+
+	BigInt diff;
+	int borrow = 0;
+	int i = 0;
+
+	for (; i < subtrahend.digits.size(); ++i)
+	{
+		int digit_diff = minuend.digits[i] - subtrahend.digits[i] - borrow;
+		diff.digits.push_back(digit_diff % BigInt::base);
+		borrow = (digit_diff < 0);
+	}
+
+	for (; i < minuend.digits.size(); ++i)
+	{
+		int digit_diff = minuend.digits[i] - borrow;
+		diff.digits.push_back(digit_diff % BigInt::base);
+		borrow = (digit_diff < 0);
+	}
+
+	return diff;
+}}}
 
 
 //BigInt operator-(const BigInt& minuend, const int subtrahend)
@@ -111,9 +146,31 @@ BigInt operator+(const BigInt& addend_1, const BigInt& addend_2)
 
 
 //// Multiplication
-//BigInt operator*(const BigInt& factor_1, const BigInt& factor_2)
-//{{{
-//}}}
+BigInt operator*(const BigInt& factor_1, const BigInt& factor_2)
+{{{
+	BigInt prod(0);
+
+	for (int i = 0; i < factor_2.digits.size(); ++i)
+	{
+		int64_t carry = 0;
+		BigInt  current_sum;
+
+		for (int j = 0; j < factor_1.digits.size(); ++j)
+		{
+			uint64_t current_prod = uint64_t(factor_1.digits[j]) * uint64_t(factor_2.digits[i]) + carry;
+			current_sum.digits.push_back(current_prod % BigInt::base);
+			carry = current_prod / BigInt::base;
+		}
+
+		if (carry > 0) { current_sum.digits.push_back(carry); }
+
+		for (int j = 0; j < i; ++j) { current_sum.digits.push_front(0); }
+
+		prod = prod + current_sum;
+	}
+
+	return (factor_1.sign == factor_2.sign) ? prod : -prod;
+}}}
 
 
 //BigInt operator*(const BigInt& factor_1, const int factor_2)
@@ -330,8 +387,9 @@ bool operator<=(const BigInt& left, const BigInt& right)
 //}}}
 
 
-void BigInt::disect()
+void BigInt::disect() const
 {{{
+	std::cout << (sign ? '-' : '+');
 	for (int i = digits.size()-1; i > 0; --i)
 	{
 		std::cout << digits[i] << "*2^" << (30 * i) << " + ";

@@ -9,7 +9,7 @@
 
 class BigInt
 {
-public:
+private:
 	std::deque<uint32_t> digits;
 	bool sign; // 0 = positive; 1 = negative
 
@@ -31,13 +31,13 @@ public:
 	//friend BigInt operator+=(BigInt& addend_1, const int addend_2);
 
 	//// Subtraction
-	//friend BigInt operator-(const BigInt& minuend, const BigInt& subtrahend);
+	friend BigInt operator-(const BigInt& minuend, const BigInt& subtrahend);
 	//friend BigInt operator-(const BigInt& minuend, const int subtrahend);
 	//friend BigInt operator-=(BigInt& minuend, const BigInt& subtrahend);
 	//friend BigInt operator-=(BigInt& minuend, const int subtrahend);
 
 	//// Multiplication
-	//friend BigInt operator*(const BigInt& factor_1, const BigInt& factor_2);
+	friend BigInt operator*(const BigInt& factor_1, const BigInt& factor_2);
 	//friend BigInt operator*(const BigInt& factor_1, const int factor_2);
 	//friend BigInt operator*=(BigInt& factor_1, const BigInt& factor_2);
 	//friend BigInt operator*=(BigInt& factor_1, const int factor_2);
@@ -97,7 +97,7 @@ public:
 	//std::string to_string() const;
 	//friend std::ostream& operator<<(std::ostream& out, const BigInt& bn);
 	//friend std::istream& operator>>(std::istream& in , const BigInt& bn);
-	void disect();
+	void disect() const;
 };
 
 

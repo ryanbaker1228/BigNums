@@ -149,7 +149,7 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 		BigInt current_sum(0);
 
 		for (int j = 0; j < left.digits.size(); ++j)
-		{{{ 
+		{{{  
 			uint64_t current_product = left.digits[j] * right.digits[i] + carry;
 			current_sum.digits.push_back(current_product % BigInt::base);
 			carry = current_product / BigInt::base;

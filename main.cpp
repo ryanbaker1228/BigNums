@@ -8,6 +8,7 @@
 int main()
 {{{ 
 	TestBigInt::full_suite();
+	BenchmarkBigInt::full_suite();
 
 	return 0;
 }}}

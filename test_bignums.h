@@ -10,7 +10,29 @@ namespace TestBigInt
 	int negation();
 	int relationals();
 	int addition();
+	int subtraction();
+	int multiplication();
 } // namespace TestBigInt
+
+
+typedef struct BenchmarkResult
+{
+	std::string operation;
+	int per_second;
+	int delta_perf;
+} BenchmarkResult;
+
+
+namespace BenchmarkBigInt
+{
+	void full_suite();
+
+	BenchmarkResult addition();
+	BenchmarkResult subtraction();
+	BenchmarkResult multiplication();
+
+	void print_table_entry(BenchmarkResult br);
+}
 
 
 
