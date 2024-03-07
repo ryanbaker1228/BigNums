@@ -12,6 +12,7 @@ namespace TestBigInt
 	int addition();
 	int subtraction();
 	int multiplication();
+	int division();
 } // namespace TestBigInt
 
 
@@ -30,6 +31,7 @@ namespace BenchmarkBigInt
 	BenchmarkResult addition();
 	BenchmarkResult subtraction();
 	BenchmarkResult multiplication();
+	BenchmarkResult division();
 
 	void print_table_entry(BenchmarkResult br);
 }

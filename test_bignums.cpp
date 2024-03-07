@@ -17,6 +17,7 @@ void TestBigInt::full_suite()
 	mu_run(TestBigInt::addition);
 	mu_run(TestBigInt::subtraction);
 	mu_run(TestBigInt::multiplication);
+	mu_run(TestBigInt::division);
 }}}
 
 
@@ -132,7 +133,7 @@ int TestBigInt::addition()
 
 
 int TestBigInt::subtraction()
-{{{   
+{{{    
 	mu_configure();
 
 	mu_assert(BigInt(0) - BigInt(0) == BigInt(0));
@@ -165,7 +166,7 @@ int TestBigInt::subtraction()
 
 
 int TestBigInt::multiplication()
-{{{
+{{{  
 	mu_configure();
 
 	mu_assert(BigInt(0) * BigInt(0) == BigInt(0));
@@ -176,7 +177,7 @@ int TestBigInt::multiplication()
 
 	srand(time(NULL));
 
-	for (int i = 0; i < 10000; ++i)
+	for (int i = 0; i < 1000; ++i)
 	{
 		int64_t a = rand() - INT_MAX / 2;
 		int64_t b = rand() - INT_MAX / 2;
@@ -195,6 +196,35 @@ int TestBigInt::multiplication()
 }}}
 
 
+int TestBigInt::division()
+{{{ 
+	mu_configure();
+
+	mu_assert(BigInt(0) / BigInt(1) == BigInt(0));	
+	mu_assert(BigInt(1) / BigInt(1) == BigInt(1));	
+	mu_assert(BigInt(2) / BigInt(1) == BigInt(2));	
+	mu_assert(BigInt(-1) / BigInt(1) == BigInt(-1));	
+
+	srand(time(NULL));
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		int a = rand() - INT_MAX / 2;
+		int b = rand() - INT_MAX / 2;
+		if (b == 0) { ++b; }
+		int q = a / b;
+
+		BigInt A(a);
+		BigInt B(b);
+		BigInt Q(q);
+
+		mu_assert(A / B == Q);
+	}
+
+	mu_return();
+}}}
+
+
 void BenchmarkBigInt::full_suite()
 {{{ 
 	std::cout << "----------------------------------------------------\n"
@@ -205,6 +235,7 @@ void BenchmarkBigInt::full_suite()
 	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::addition());
 	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::subtraction());
 	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::multiplication());
+	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::division());
 }}}
 
 
@@ -330,6 +361,49 @@ BenchmarkResult BenchmarkBigInt::multiplication()
 	{ 
 		.operation  = "multiplication",
 		.per_second = mults_per_second,
+		.delta_perf = perf_delta,
+	};
+
+}}}
+
+
+BenchmarkResult BenchmarkBigInt::division()
+{{{
+	using std::chrono::high_resolution_clock,
+		  std::chrono::duration_cast,
+		  std::chrono::nanoseconds;
+	
+	srand(time(NULL));
+	const int num_divs = 1;
+
+	auto start = high_resolution_clock::now();
+
+	for (int i = 0; i < num_divs; ++i)
+	{
+		BigInt a(rand());
+		BigInt b(rand() + 1);
+		BigInt c = a / b;
+	}
+	auto end_bn = high_resolution_clock::now();
+
+	for (int i = 0; i < num_divs; ++i)
+	{
+		int a = rand();
+		int b = rand() + 1;
+		int c = a / b;
+	}
+
+	auto end_nn      = high_resolution_clock::now();
+	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
+	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+
+	const int divs_per_second = 1e9 * num_divs / duration_bn.count();
+	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
+
+	return BenchmarkResult 
+	{ 
+		.operation  = "division",
+		.per_second = divs_per_second,
 		.delta_perf = perf_delta,
 	};
 

@@ -43,7 +43,7 @@ public:
 	//friend BigInt operator*=(BigInt& factor_1, const int factor_2);
 
 	//// Division
-	//friend BigInt operator/(const BigInt& dividend, const BigInt& divisor);
+	friend BigInt operator/(const BigInt& dividend, const BigInt& divisor);
 	//friend BigInt operator/(const BigInt& dividend, const int divisor);
 	//friend BigInt operator/=(BigInt& dividend, const BigInt& divisor);
 	//friend BigInt operator/=(BigInt& dividend, const int divisor);
@@ -56,7 +56,7 @@ public:
 
 	//// Unary
 	BigInt operator-() const;
-	//BigInt operator+() const;
+	BigInt operator+() const;
 
 	//// Increment / Decrement
 	//BigInt& operator++();

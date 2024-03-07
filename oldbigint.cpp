@@ -169,7 +169,7 @@ BigInt operator*(const BigInt& left, const BigInt& right)
 
 
 BigInt operator/(const BigInt& left, const BigInt& right)
-{{{ 
+{{{  
 	if (right == 0) 	
 	{ 
 		std::cerr << "Warning, attempted division by zero returns zero.\n";
@@ -183,7 +183,7 @@ BigInt operator/(const BigInt& left, const BigInt& right)
 	for (int i = 0; i < left.digits.size(); ++i) { quotient.digits.push_back(0); }
 
 	for (int i = left.digits.size()-1; i >= 0; --i)
-	{{{  
+	{{{   
 		remainder.digits.push_front(left.digits[i]);
 		if (remainder.digits.back() == 0) { remainder.digits.pop_back(); }
 

@@ -189,9 +189,40 @@ BigInt operator*(const BigInt& factor_1, const BigInt& factor_2)
 
 
 //// Division
-//BigInt operator/(const BigInt& dividend, const BigInt& divisor)
-//{{{
-//}}}
+BigInt operator/(const BigInt& dividend, const BigInt& divisor)
+{{{
+	if (divisor == 0)
+	{
+		throw std::runtime_error("Error, attempted BigInt division by 0.");
+	}
+	if (+divisor > +dividend) 
+	{ 
+		return 0; 
+	}
+
+	BigInt quotient(0);
+	BigInt remainder;
+
+	for (int i = 0; i < dividend.digits.size(); ++i) { quotient.digits.push_back(0); }
+
+	for (int i = dividend.digits.size()-1; i >= 0; --i)
+	{
+		remainder.digits.push_front(dividend.digits[i]);
+		if (remainder.digits.back() == 0) { remainder.digits.pop_back(); }
+
+		while (remainder >= +divisor)
+		{
+			remainder = remainder - +divisor;
+			quotient.digits[i] += 1;
+		}
+	}
+
+	while  (quotient.digits.back() == 0 && quotient.digits.size() > 1) 
+	{ 
+		quotient.digits.pop_back(); 
+	}
+	return (divisor.sign == dividend.sign) ? quotient : -quotient;
+}}}
 
 
 //BigInt operator/(const BigInt& dividend, const int divisor)
@@ -240,9 +271,12 @@ BigInt BigInt::operator-() const
 }}}
 
 
-//BigInt BigInt::operator+() const
-//{{{
-//}}}
+BigInt BigInt::operator+() const
+{{{
+	BigInt bn(*this);
+	bn.sign = false;
+	return bn;
+}}}
 
 
 //// Or
