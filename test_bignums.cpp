@@ -1,34 +1,54 @@
 #include <cstdlib>
 #include <time.h>
 #include <string>
-#include <iostream>
-#include <iomanip>
-
-#include "test_bignums.h"
 #include "miniunit.h"
 #include "bigint.h"
 
 
 
-// Test BigInt {{{ 
-void TestBigInt::full_suite()
+namespace test_BigInt
+{
+	static void full_suite();
+	static int negation();
+	static int relationals();
+	static int addition();
+	static int subtraction();
+	static int multiplication();
+	static int bitshifts();
+	static int complement();
+	static int bitwise_and();
+	static int bitwise_xor();
+	static int bitwise_or();
+	static int division();
+} // namespace test_BigInt
+
+
+static void test_BigInt::full_suite()
 {{{
-	mu_run(TestBigInt::negation);
-	mu_run(TestBigInt::relationals);	
-	mu_run(TestBigInt::addition);
-	mu_run(TestBigInt::subtraction);
-	mu_run(TestBigInt::multiplication);
-	//mu_run(TestBigInt::division);
+	mu_run(test_BigInt::negation);
+	mu_run(test_BigInt::relationals);	
+	mu_run(test_BigInt::addition);
+	mu_run(test_BigInt::subtraction);
+	mu_run(test_BigInt::multiplication);
+	mu_run(test_BigInt::bitshifts);
+	mu_run(test_BigInt::complement);
+	mu_run(test_BigInt::bitwise_and);
+	mu_run(test_BigInt::bitwise_xor);
+	mu_run(test_BigInt::bitwise_or);
+	mu_run(test_BigInt::division);
 }}}
 
 
-int TestBigInt::negation()
+static int test_BigInt::negation()
 {{{
 	mu_configure();
 
-	mu_assert(BigInt(0) == -BigInt(0));
+	mu_assert(BigInt(0)  == -BigInt(0));
 	mu_assert(BigInt(-1) == -BigInt(1));
-	mu_assert(BigInt(1) == -BigInt(-1));
+	mu_assert(BigInt(1)  == -BigInt(-1));
+	mu_assert(BigInt(-999999999999999ull) == -BigInt(999999999999999ull));
+	mu_assert(BigInt(999999999999999ull) == -BigInt(-999999999999999ull));
+	mu_assert(BigInt(-0) == BigInt(0));
 
 	srand(time(NULL));
 
@@ -38,25 +58,32 @@ int TestBigInt::negation()
 
 		mu_set_error_message(std::to_string(n));
 		mu_assert(BigInt(-n) == -BigInt(n));
+		mu_assert(-BigInt(-n) == BigInt(n));
 	}
 
 	mu_return();
 }}}
 
 
-int TestBigInt::relationals()
+static int test_BigInt::relationals()
 {{{
 	mu_configure();
 
-	mu_assert(BigInt(0) == BigInt(0));
-	mu_assert(!(BigInt(0) < BigInt(0)));
-	mu_assert(!(BigInt(0) > BigInt(0)));
-	mu_assert((BigInt(0) <= BigInt(0)));
-	mu_assert((BigInt(0) >= BigInt(0)));
-	mu_assert(BigInt(1) > BigInt(0));
-	mu_assert(BigInt(-1) < BigInt(0));
-	mu_assert(!(BigInt(0) >= BigInt(1)));
-	mu_assert(!(BigInt(0) != BigInt(0)));
+	mu_assert(  BigInt(0)  == BigInt(0));
+	mu_assert(!(BigInt(0)  <  BigInt(0)));
+	mu_assert(!(BigInt(0)  >  BigInt(0)));
+	mu_assert(  BigInt(0)  <= BigInt(0));
+	mu_assert(  BigInt(0)  >= BigInt(0));
+	mu_assert(  BigInt(1)  >  BigInt(0));
+	mu_assert(  BigInt(-1) <  BigInt(0));
+	mu_assert(!(BigInt(0)  >= BigInt(1)));
+	mu_assert(!(BigInt(0)  != BigInt(0)));
+	mu_assert(!(BigInt(5)  != BigInt(5)));
+	mu_assert(  BigInt(5)  == BigInt(5));
+	mu_assert(  BigInt(-5) <= BigInt(5));
+	mu_assert(  BigInt(-5) <  BigInt(5));
+	mu_assert(  BigInt(5)  >= BigInt(-5));
+	mu_assert(  BigInt(5)  >  BigInt(-5));
 
 	srand(time(NULL));
 
@@ -76,6 +103,9 @@ int TestBigInt::relationals()
 		mu_assert((I <= J) != (I >  J)); 
 		mu_assert((I == J) != (I != J));
 
+		// I understand these tests are redundant but I am paranoid
+		if (I < J) { mu_assert((I <= J) && (I != J) && !(I >= J) && (J > I)); }
+		if (I > J) { mu_assert((I >= J) && (I != J) && !(I <= J) && (J < I)); }
 	}
 
 	for (int i = 1; i <= 1000; ++i)
@@ -95,20 +125,33 @@ int TestBigInt::relationals()
 		mu_assert((a >= b) == (A >= B));
 		mu_assert((A <  B) != (A >  B));
 		mu_assert((A == B) != (A != B));
+
+		// I understand these tests are redundant but I am paranoid
+		if (A < B) { mu_assert((A <= B) && (A != B) && !(A >= B) && (B > A)); }
+		if (A > B) { mu_assert((A >= B) && (A != B) && !(A <= B) && (B < A)); }
 	}
 
 	mu_return();
 }}}
 
 
-int TestBigInt::addition()
+static int test_BigInt::addition()
 {{{  
 	mu_configure();
 
-	mu_assert(BigInt(0) + BigInt(0) == BigInt(0));
-	mu_assert(BigInt(1) + BigInt(0) == BigInt(1));
-	mu_assert(BigInt(1) + BigInt(1) == BigInt(2));
+	mu_assert(BigInt(0)    + BigInt(0) == BigInt(0));
+	mu_assert(BigInt(1)    + BigInt(0) == BigInt(1));
+	mu_assert(BigInt(1)    + BigInt(1) == BigInt(2));
 	mu_assert(BigInt(1000) + BigInt(1) == BigInt(1001));
+	mu_assert(BigInt(999999999999999ull)
+			+ BigInt(888888888888888ull) 
+		   == BigInt(1888888888888887ull));
+	mu_assert(BigInt(-1)   + BigInt(-1) == BigInt(-2));
+	mu_assert(BigInt(-1)   + BigInt(1)  == BigInt(0));
+	mu_assert(BigInt(1)    + BigInt(-1) == BigInt(0));
+	mu_assert(BigInt(100)  + BigInt(-1) == BigInt(99));
+	mu_assert(BigInt(-100) + BigInt(-1) == BigInt(-101));
+	mu_assert(BigInt(-100) + BigInt(1)  == BigInt(-99));
 
 	srand(time(NULL));
 
@@ -129,21 +172,37 @@ int TestBigInt::addition()
 		mu_assert(b + A == S);
 	}
 
+	for (int i = -100, j = 200; i <= 300 && j >= -200; ++i, --j)
+	{
+		BigInt I(i);
+		BigInt J(j);
+
+		mu_set_error_message(std::to_string(i) + ", " + std::to_string(j));
+		mu_assert(I + J == 100);
+		mu_assert(J + I == 100);
+		mu_assert(I + j == 100);
+		mu_assert(J + i == 100);
+	}
+
 	mu_return();
 }}}
 
 
-int TestBigInt::subtraction()
+static int test_BigInt::subtraction()
 {{{    
 	mu_configure();
 
-	mu_assert(BigInt(0) - BigInt(0) == BigInt(0));
-	mu_assert(BigInt(1) - BigInt(0) == BigInt(1));
-	mu_assert(BigInt(1) - BigInt(1) == BigInt(0));
-	mu_assert(BigInt(0) - BigInt(1) == BigInt(-1));
+	mu_assert(BigInt(0)  - BigInt(0) == BigInt(0));
+	mu_assert(BigInt(1)  - BigInt(0) == BigInt(1));
+	mu_assert(BigInt(1)  - BigInt(1) == BigInt(0));
+	mu_assert(BigInt(0)  - BigInt(1) == BigInt(-1));
 	mu_assert(BigInt(-1) - BigInt(1) == BigInt(-2));
-	mu_assert(BigInt(0) - BigInt(999999999) == BigInt(-999999999));
+	mu_assert(BigInt(0)  - BigInt(999999999) == BigInt(-999999999));
 	mu_assert(BigInt(-999999999) - BigInt(999999999) == BigInt(-1999999998));
+	mu_assert(BigInt(-4) - BigInt(-5) == BigInt(1));
+	mu_assert(BigInt(4)  - BigInt(5)  == BigInt(-1));
+	mu_assert(BigInt(-4) - BigInt(5)  == BigInt(-9));
+	mu_assert(BigInt(4)  - BigInt(-5) == BigInt(9));
 
 	srand(time(NULL));
 
@@ -162,19 +221,35 @@ int TestBigInt::subtraction()
 		mu_assert(B - A == -D);
 	}
 
+	for (int i = -100, j = 200; i <= 300 && j <= 600; ++i, ++j)
+	{
+		BigInt I(i);
+		BigInt J(j);
+
+		mu_set_error_message(std::to_string(i) + ", " + std::to_string(j));
+		mu_assert(I - J == -300);
+		mu_assert(J - I == 300);
+		mu_assert(I - j == -300);
+		mu_assert(J - i == 300);
+	}
+
 	mu_return();
 }}}
 
 
-int TestBigInt::multiplication()
-{{{  
+static int test_BigInt::multiplication()
+{{{   
 	mu_configure();
 
-	mu_assert(BigInt(0) * BigInt(0) == BigInt(0));
-	mu_assert(BigInt(1) * BigInt(0) == BigInt(0));
-	mu_assert(BigInt(1) * BigInt(1) == BigInt(1));
+	mu_assert(BigInt(0)  * BigInt(0)  == BigInt(0));
+	mu_assert(BigInt(1)  * BigInt(0)  == BigInt(0));
+	mu_assert(BigInt(1)  * BigInt(1)  == BigInt(1));
 	mu_assert(BigInt(-1) * BigInt(-1) == BigInt(1));
 	mu_assert(BigInt(15) * BigInt(15) == BigInt(225));
+	mu_assert(BigInt(-5) * BigInt(15) == BigInt(-75));
+	mu_assert(BigInt(15) * BigInt(5)  == BigInt(75));
+	mu_assert(BigInt(15) * BigInt(-5) == BigInt(-75));
+	mu_assert(BigInt(64) * BigInt(64) == BigInt(4096));
 
 	srand(time(NULL));
 
@@ -196,8 +271,166 @@ int TestBigInt::multiplication()
 	mu_return();
 }}}
 
-/*
-int TestBigInt::division()
+
+static int test_BigInt::bitshifts()
+{{{
+	mu_configure();
+
+	mu_assert(BigInt(0) << 1 == BigInt(0));
+	mu_assert(BigInt(0) >> 1 == BigInt(0));
+	mu_assert(BigInt(1) << 1 == BigInt(2));
+	mu_assert(BigInt(2) >> 1 == BigInt(1));
+	mu_assert(BigInt(60273125) << 26 == BigInt(4044860948480000));
+	mu_assert(BigInt(2083998385) >> 6 == BigInt(32562474));
+	mu_assert(BigInt(358194480) << 2 == BigInt(1432777920));
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		int64_t a = rand();
+		int64_t b = rand() % 32;
+		int64_t h = a << b;
+		int64_t l = a >> b;
+
+		BigInt A(a);
+		BigInt H(h);
+		BigInt L(l);
+
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert(A >> b == L);
+		mu_assert(A << b == H);
+		mu_assert(H >> b == A);
+	}
+
+	mu_return();
+}}}
+
+
+static int test_BigInt::complement()
+{{{
+	mu_configure();
+
+	mu_assert(~BigInt(0) == BigInt(-1));
+	mu_assert(~BigInt(1) == BigInt(-2));
+
+	srand(time(NULL));
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		int a = rand() - INT_MAX / 2;
+
+		BigInt A(a);
+
+		mu_set_error_message(std::to_string(a));
+		mu_assert(~A == BigInt(~a));
+		mu_assert(~~A == BigInt(~~a));
+		mu_assert(~~~A == BigInt(~~~a));
+	}
+
+	mu_return();
+}}}
+
+
+static int test_BigInt::bitwise_and()
+{{{
+	mu_configure();
+
+	mu_assert((BigInt(0) & BigInt(0)) == BigInt(0));
+	mu_assert((BigInt(1) & BigInt(0)) == BigInt(0));
+	mu_assert((BigInt(899907499) & BigInt(18001469)) == BigInt(16920105));
+	mu_assert((BigInt(455367969) & BigInt(-262271328)) == BigInt(268700704));
+	mu_assert((BigInt(0xf0f0f0f0) 
+			 & BigInt(0x0f0f0f0f)) 
+			== BigInt(0));
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		int a = rand() - INT_MAX / 2;
+		int b = rand() - INT_MAX / 2;
+		int m = a & b;
+
+		BigInt A(a);
+		BigInt B(b);
+		BigInt M(m);
+
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert((B & A) == M);
+		mu_assert((A & A) == A);
+		mu_assert((B & B) == B);
+		mu_assert((A & ~A) == 0);
+		mu_assert((B & ~B) == 0);
+	}
+
+	mu_return();
+}}}
+
+
+static int test_BigInt::bitwise_xor()
+{{{
+	mu_configure();
+
+	mu_assert((BigInt(0) ^ BigInt(0)) == BigInt(0));
+	mu_assert((BigInt(1) ^ BigInt(0)) == BigInt(1));
+	mu_assert((BigInt(1) ^ BigInt(1)) == BigInt(0));
+	mu_assert((BigInt(0xff00ff00) ^ BigInt(0xff00ff)) == BigInt(0xffffffff));
+	mu_assert((BigInt(0xffffff00) ^ BigInt(0xff00ff)) == BigInt(0xff00ffff));
+	mu_assert((BigInt(0xf00f00ff) ^ BigInt(0xff0f0f00)) == BigInt(0xf000fff));
+	
+	for (int i = 0; i < 1000; ++i)
+	{
+		int a = rand() - INT_MAX / 2;
+		int b = rand() - INT_MAX / 2;
+		int m = a ^ b;
+
+		BigInt A(a);
+		BigInt B(b);
+		BigInt M(m);
+
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert((A ^ B) == M);
+		mu_assert((B ^ A) == M);
+		mu_assert((A ^ A) == 0);
+		mu_assert((B ^ B) == 0);
+		//mu_assert((A ^ ~A) == 0);
+		//mu_assert((B ^ ~B) == 0);
+	}
+
+	mu_return();
+}}}
+
+
+static int test_BigInt::bitwise_or()
+{{{ 
+	mu_configure();
+
+	mu_assert((BigInt(0) | BigInt(0)) == BigInt(0));
+	mu_assert((BigInt(1) | BigInt(0)) == BigInt(1));
+	mu_assert((BigInt(1) | BigInt(1)) == BigInt(1));
+	mu_assert((BigInt(0xff00ff00) | BigInt(0xff00ff)) == BigInt(0xffffffff));
+	mu_assert((BigInt(0xffffff00) | BigInt(0xff00ff)) == BigInt(0xffffffff));
+	mu_assert((BigInt(0xf00f00ff) | BigInt(0xff0f0f00)) == BigInt(0xff0f0fff));
+	mu_assert((BigInt(705004774) | BigInt(-799535931)) == BigInt(-94532377));
+	mu_assert((BigInt(-82637022) | BigInt(541482452)) == BigInt(-78159882));
+	
+	for (int i = 0; i < 1000; ++i)
+	{
+		int a = rand() - INT_MAX / 2;
+		int b = rand() - INT_MAX / 2;
+		int m = a | b;
+
+		BigInt A(a);
+		BigInt B(b);
+		BigInt M(m);
+
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert((A | B) == M);
+		mu_assert((B | A) == M);
+	}
+
+	mu_return();
+}}}
+
+
+static int test_BigInt::division()
 {{{ 
 	mu_configure();
 
@@ -224,206 +457,4 @@ int TestBigInt::division()
 
 	mu_return();
 }}}
-*/
-// }}}
-
-
-// BenckmarkBitInt {{{
-void BenchmarkBigInt::full_suite()
-{{{ 
-	std::cout << "----------------------------------------------------\n"
-			  << "|                |  # carried out |  X slower than |\n"
-	          << "|      operation |     per second |   native equiv |\n"
-			  << "----------------------------------------------------\n";
-
-	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::addition());
-	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::subtraction());
-	BenchmarkBigInt::print_table_entry(BenchmarkBigInt::multiplication());
-	//BenchmarkBigInt::print_table_entry(BenchmarkBigInt::division());
-}}}
-
-
-BenchmarkBigInt::BenchmarkResult BenchmarkBigInt::addition()
-{{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
-	srand(time(NULL));
-	const int num_additions = 100000;
-
-	auto start = high_resolution_clock::now();
-
-	for (int i = 0; i < num_additions; ++i)
-	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a + b;
-	}
-	auto end_bn = high_resolution_clock::now();
-
-	for (int i = 0; i < num_additions; ++i)
-	{
-		int64_t a = rand();
-		int64_t b = rand();
-		int64_t c = a + b;
-	}
-
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
-
-	const int adds_per_second = 1e9 * num_additions / duration_bn.count();
-	const int perf_delta 	 = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "addition",
-		.per_second = adds_per_second,
-		.delta_perf = perf_delta,
-	};
-}}}
-
-
-BenchmarkBigInt::BenchmarkResult BenchmarkBigInt::subtraction()
-{{{ 
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
-	srand(time(NULL));
-	const int num_subtractions = 100000;
-
-	auto start = high_resolution_clock::now();
-
-	for (int i = 0; i < num_subtractions; ++i)
-	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a - b;
-	}
-	auto end_bn = high_resolution_clock::now();
-
-	for (int i = 0; i < num_subtractions; ++i)
-	{
-		int64_t a = rand();
-		int64_t b = rand();
-		int64_t c = a - b;
-	}
-
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
-
-	const int subs_per_second = 1e9 * num_subtractions / duration_bn.count();
-	const int perf_delta 	  = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "subtraction",
-		.per_second = subs_per_second,
-		.delta_perf = perf_delta,
-	};
-
-}}}
-
-
-BenchmarkBigInt::BenchmarkResult BenchmarkBigInt::multiplication()
-{{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
-	srand(time(NULL));
-	const int num_mults= 100000;
-
-	auto start = high_resolution_clock::now();
-
-	for (int i = 0; i < num_mults; ++i)
-	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a * b;
-	}
-	auto end_bn = high_resolution_clock::now();
-
-	for (int i = 0; i < num_mults; ++i)
-	{
-		int64_t a = rand();
-		int64_t b = rand();
-		int64_t c = a * b;
-	}
-
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
-
-	const int mults_per_second = 1e9 * num_mults / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "multiplication",
-		.per_second = mults_per_second,
-		.delta_perf = perf_delta,
-	};
-
-}}}
-
-/*
-BenchmarkBigInt::BenchmarkResult BenchmarkBigInt::division()
-{{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
-	srand(time(NULL));
-	const int num_divs = 1;
-
-	auto start = high_resolution_clock::now();
-
-	for (int i = 0; i < num_divs; ++i)
-	{
-		BigInt a(rand());
-		BigInt b(rand() + 1);
-		BigInt c = a / b;
-	}
-	auto end_bn = high_resolution_clock::now();
-
-	for (int i = 0; i < num_divs; ++i)
-	{
-		int a = rand();
-		int b = rand() + 1;
-		int c = a / b;
-	}
-
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
-
-	const int divs_per_second = 1e9 * num_divs / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "division",
-		.per_second = divs_per_second,
-		.delta_perf = perf_delta,
-	};
-
-}}}
-*/
-
-void BenchmarkBigInt::print_table_entry(BenchmarkResult br)
-{{{
-	std::cout << "|";
-	std::cout << std::setw(15) << br.operation;
-	std::cout << " |";
-	std::cout << std::setw(15) << br.per_second;
-	std::cout << " |";
-	std::cout << std::setw(15) << br.delta_perf;
-	std::cout << " |\n";
-	std::cout << std::string(52, '-') << std::endl;
-}}}
-// }}}
 

@@ -17,6 +17,8 @@ private:
 	static constexpr uint32_t base_mask = BigInt::base - 1;
 	static constexpr uint32_t log2_base = 30;
 
+	friend BigInt recursive_bitshift_divide(const BigInt& dividend, const BigInt& divisor);
+
 public:
 	BigInt();
 	BigInt(int64_t n);
@@ -67,23 +69,23 @@ public:
 	//BigInt operator--(int);
 
 	//// Or
-	//friend BigInt operator|(const BigInt& bn, const BigInt& mask);
+	friend BigInt operator|(const BigInt& bn, const BigInt& mask);
 	//friend BigInt operator|=(BigInt& bn, const BigInt& mask);
 
 	//// And
-	//friend BigInt operator&(const BigInt& bn, const BigInt& mask);
+	friend BigInt operator&(const BigInt& bn, const BigInt& mask);
 	//friend BigInt operator&=(BigInt& bn, const BigInt& mask);
 
 	//// Xor
-	//friend BigInt operator^(const BigInt& bn, const BigInt& mask);
+	friend BigInt operator^(const BigInt& bn, const BigInt& mask);
 	//friend BigInt operator^=(BigInt& bn, const BigInt& mask);
 
 	//// Not
-	//friend BigInt operator~(const BigInt& bn);
+	friend BigInt operator~(const BigInt& bn);
 
 	//// Bitshift
-	//friend BigInt operator<<(const BigInt& bn, const int shift);
-	//friend BigInt operator>>(const BigInt& bn, const int shift);
+	friend BigInt operator<<(const BigInt& bn, int shift);
+	friend BigInt operator>>(const BigInt& bn, int shift);
 	//friend BigInt operator<<=(BigInt& bn, const int shift);
 	//friend BigInt operator>>=(BigInt& bn, const int shift);
 
@@ -100,6 +102,7 @@ public:
 	//friend std::ostream& operator<<(std::ostream& out, const BigInt& bn);
 	//friend std::istream& operator>>(std::istream& in , const BigInt& bn);
 	void disect() const;
+	void trim_lz();
 };
 
 

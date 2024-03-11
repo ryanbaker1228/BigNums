@@ -1,14 +1,14 @@
 #include <chrono>
 
 #include "bigint.h"
-#include "test_bignums.h"
+#include "test_bignums.cpp"
 
 
 
 int main()
 {{{ 
-	TestBigInt::full_suite();
-	BenchmarkBigInt::full_suite();
+	test_BigInt::full_suite();
+	//benchmark_BigInt::full_suite();
 
 	return 0;
 }}}
