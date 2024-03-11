@@ -444,7 +444,7 @@ static int test_BigInt::division()
 	for (int i = 0; i < 1000; ++i)
 	{
 		int a = rand() - INT_MAX / 2;
-		int b = rand() - INT_MAX / 2;
+		int b = rand() % 257 - 157 / 2;
 		if (b == 0) { ++b; }
 		int q = a / b;
 
@@ -453,6 +453,7 @@ static int test_BigInt::division()
 		BigInt Q(q);
 
 		mu_assert(A / B == Q);
+		if (Q != 0) { mu_assert(A / Q == B); };
 	}
 
 	mu_return();
