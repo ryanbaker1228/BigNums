@@ -10,7 +10,7 @@ BigInt::BigInt()
 
 
 BigInt::BigInt(int64_t n)
-{{{
+{{{ 
 	sign = (n < 0);
 	n = std::abs(n);
 
@@ -22,9 +22,35 @@ BigInt::BigInt(int64_t n)
 }}}
 
 
-//BigInt::BigInt(std::string s);
-//{{{
-//}}}
+BigInt::BigInt(std::string s)
+{{{
+	const int chunk_size = 9;
+	bool is_negative = false;
+
+	if (s[0] == '-')
+	{
+		is_negative = true;
+		s = s.substr(1);
+	}
+
+	const int final_chunk_size = s.length() % chunk_size;
+	
+	*this = 0;
+
+	for (int i = 0; i+chunk_size <= s.length(); i += chunk_size)
+	{
+		*this = *this * 1e9;
+		*this = *this + std::stoi(s.substr(i, chunk_size));
+	}
+	
+	if (final_chunk_size > 0)
+	{
+		*this = *this * std::pow(10, final_chunk_size);
+		*this = *this + std::stoi(s.substr(s.length() - final_chunk_size, final_chunk_size));
+	}
+
+	sign = *this != 0 && is_negative;
+}}}
 
 
 //BigInt& BigInt::operator=(std::string s)
@@ -43,38 +69,38 @@ BigInt::BigInt(int64_t n)
 
 
 // Addition
-BigInt operator+(const BigInt& addend_1, const BigInt& addend_2)
+BigInt BigInt::plus(const BigInt& addend) const
 {{{   
-	if (addend_2 < 0)
+	if (addend < 0)
 	{
-		return (addend_1 - -addend_2);
+		return (*this - -addend);
 	}
-	if (addend_1 < 0)
+	if (*this < 0)
 	{
-		return -(-addend_1 - addend_2);
+		return -(-*this - addend);
 	}
 
 	BigInt sum;
 	int carry = 0;
 	int i = 0;
 
-	for (; i < std::min(addend_1.digits.size(), addend_2.digits.size()); ++i)
+	for (; i < std::min(this->digits.size(), addend.digits.size()); ++i)
 	{
-		int digit_sum = addend_1.digits[i] + addend_2.digits[i] + carry;
+		int digit_sum = this->digits[i] + addend.digits[i] + carry;
 		sum.digits.push_back(digit_sum & BigInt::base_mask);
 		carry = digit_sum >> BigInt::log2_base;
 	}
 
-	for (; i < addend_1.digits.size(); ++i)
+	for (; i < this->digits.size(); ++i)
 	{
-		int digit_sum = addend_1.digits[i] + carry;
+		int digit_sum = this->digits[i] + carry;
 		sum.digits.push_back(digit_sum & BigInt::base_mask);
 		carry = digit_sum >> BigInt::log2_base;
 	}
 
-	for (; i < addend_2.digits.size(); ++i)
+	for (; i < addend.digits.size(); ++i)
 	{
-		int digit_sum = addend_2.digits[i] + carry;
+		int digit_sum = addend.digits[i] + carry;
 		sum.digits.push_back(digit_sum & BigInt::base_mask);
 		carry = digit_sum >> BigInt::log2_base;
 	}
@@ -101,19 +127,19 @@ BigInt operator+(const BigInt& addend_1, const BigInt& addend_2)
 
 
 // Subtraction
-BigInt operator-(const BigInt& minuend, const BigInt& subtrahend)
+BigInt BigInt::minus(const BigInt& subtrahend) const
 {{{
-	if (minuend < subtrahend)
+	if (*this < subtrahend)
 	{
-		return -(subtrahend - minuend);
+		return -(subtrahend - *this);
 	}
-	if (minuend < 0)
+	if (*this < 0)
 	{
-		return -(-minuend - -subtrahend);
+		return -(-*this - -subtrahend);
 	}
 	if (subtrahend < 0)
 	{
-		return (minuend + -subtrahend);
+		return (*this + -subtrahend);
 	}
 
 	BigInt diff;
@@ -122,14 +148,14 @@ BigInt operator-(const BigInt& minuend, const BigInt& subtrahend)
 
 	for (; i < subtrahend.digits.size(); ++i)
 	{
-		int digit_diff = minuend.digits[i] - subtrahend.digits[i] - borrow;
+		int digit_diff = this->digits[i] - subtrahend.digits[i] - borrow;
 		diff.digits.push_back(digit_diff % BigInt::base);
 		borrow = (digit_diff < 0);
 	}
 
-	for (; i < minuend.digits.size(); ++i)
+	for (; i < this->digits.size(); ++i)
 	{
-		int digit_diff = minuend.digits[i] - borrow;
+		int digit_diff = this->digits[i] - borrow;
 		diff.digits.push_back(digit_diff % BigInt::base);
 		borrow = (digit_diff < 0);
 	}
@@ -154,32 +180,13 @@ BigInt operator-(const BigInt& minuend, const BigInt& subtrahend)
 
 
 // Multiplication
-BigInt operator*(const BigInt& factor_1, const BigInt& factor_2)
-{{{ 
-	BigInt prod(0);
+BigInt BigInt::multiply(const BigInt& factor) const
+{{{  
+	BigInt product;
 
-	for (int i = 0; i < factor_2.digits.size(); ++i)
-	{
-		int64_t carry = 0;
-		BigInt  current_sum;
+	product = this->grade_school_multiply(factor);
 
-		for (int j = 0; j < factor_1.digits.size(); ++j)
-		{
-			uint64_t current_prod = uint64_t(factor_1.digits[j])
-								  * uint64_t(factor_2.digits[i]) 
-								  + carry;
-			current_sum.digits.push_back(current_prod % BigInt::base);
-			carry = current_prod / BigInt::base;
-		}
-
-		if (carry > 0) { current_sum.digits.push_back(carry); }
-
-		for (int j = 0; j < i; ++j) { current_sum.digits.push_front(0); }
-
-		prod = prod + current_sum;
-	}
-
-	return (factor_1.sign == factor_2.sign) ? prod : -prod;
+	return (this->sign == factor.sign) ? product : -product;
 }}}
 
 
@@ -198,25 +205,78 @@ BigInt operator*(const BigInt& factor_1, const BigInt& factor_2)
 //}}}
 
 
-// Division
-BigInt operator/(const BigInt& dividend, const BigInt& divisor)
+BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 {{{ 
+	BigInt product(0);
+
+	for (int i = 0; i < factor.digits.size(); ++i)
+	{
+		int64_t carry = 0;
+		BigInt  current_sum;
+
+		for (int j = 0; j < this->digits.size(); ++j)
+		{
+			uint64_t current_prod = uint64_t(this->digits[j])
+								  * uint64_t(factor.digits[i]) 
+								  + carry;
+			current_sum.digits.push_back(current_prod % BigInt::base);
+			carry = current_prod / BigInt::base;
+		}
+
+		if (carry > 0) { current_sum.digits.push_back(carry); }
+
+		for (int j = 0; j < i; ++j) { current_sum.digits.push_front(0); }
+
+		product = product + current_sum;
+	}
+
+	return product;
+}}}
+
+
+BigInt BigInt::karatsuba_multiply(const BigInt& factor) const
+{{{
+	const int mid_point = (1 + std::max(this->digits.size(), factor.digits.size())) / 2;
+
+	std::pair<BigInt, BigInt> a = this->chop(mid_point);
+	std::pair<BigInt, BigInt> b = factor.chop(mid_point);
+
+	BigInt prod_lo = a.first.multiply(b.first);
+	BigInt prod_hi = a.second.multiply(b.second);
+	BigInt prod_md = (a.second.plus(a.first)).multiply(b.second.plus(b.first));
+
+	BigInt product = (prod_hi << (2 * BigInt::base * mid_point))
+				   + (prod_md - prod_hi - prod_lo) + (BigInt::base * mid_point)
+				   + prod_lo;
+
+	return product;
+}}}
+
+
+// Division
+BigInt BigInt::divide(const BigInt& divisor) const
+{{{  
 	if (divisor == 0)
 	{
 		throw std::runtime_error("Error, attempted BigInt division by 0.");
 	}
 
-	const BigInt divisor_abs  = +divisor;
-	const BigInt dividend_abs = +dividend;
+	BigInt quotient;
 
-	if (divisor_abs > dividend_abs) 
+	if (this->is_absolute_less_than(divisor)) 
 	{ 
-		return 0; 
+		quotient = 0;
 	}
-
-	const BigInt quotient = recursive_bitshift_divide(dividend_abs, divisor_abs);
+	if (this->is_absolute_equal_to(divisor))
+	{
+		quotient = 1;
+	}
+	else
+	{
+		quotient = this->recursive_bitshift_divide(divisor);
+	}
 	
-	return (dividend.sign == divisor.sign) ? quotient : -quotient;
+	return (this->sign == divisor.sign) ? quotient : -quotient;
 }}}
 
 
@@ -235,31 +295,44 @@ BigInt operator/(const BigInt& dividend, const BigInt& divisor)
 //}}}
 
 
-BigInt recursive_bitshift_divide(const BigInt& dividend, const BigInt& divisor)
-{{{
-	BigInt quotient(1);
-	BigInt accumulator(divisor);
-
-	if (dividend < divisor)
+BigInt BigInt::recursive_bitshift_divide(const BigInt& divisor) const
+{{{   
+	if (this->is_absolute_less_than(divisor))
 	{
 		return 0;
 	}
-	if (dividend == divisor)
+	if (this->is_absolute_equal_to(divisor))
 	{
 		return 1;
 	}
 
-	while (accumulator < dividend)
+	BigInt quotient(1);
+	BigInt accumulator(divisor);
+	accumulator.sign = false;
+	BigInt trim(*this);
+	trim.sign = false;
+	trim.trim_lz();
+
+	int shift = trim.most_significant_bit() - divisor.most_significant_bit();
+
+	quotient = quotient << shift;
+	accumulator = accumulator << shift;
+
+	if (accumulator > trim)
 	{
-		quotient = quotient << 1;
-		accumulator = accumulator << 1;
+		accumulator = accumulator >> 1;
+		quotient = quotient >> 1;
 	}
 
-	quotient = quotient >> 1;
-	accumulator = accumulator >> 1;
-
-	return quotient + recursive_bitshift_divide(dividend - accumulator, divisor);
+	return quotient + (trim-accumulator).recursive_bitshift_divide(divisor);
 }}}
+
+
+/*
+BigInt BigInt::knuth_divide(const BigInt& other) const
+{{{
+	
+}}}*/
 
 
 //// Modulus
@@ -293,17 +366,11 @@ BigInt BigInt::operator-() const
 }}}
 
 
-BigInt BigInt::operator+() const
-{{{
-	BigInt bn(*this);
-	bn.sign = false;
-	return bn;
-}}}
-
-
 //// Or
-BigInt operator|(const BigInt& bn, const BigInt& mask)
+BigInt BigInt::bitwise_or(const BigInt& mask) const
 {{{
+	BigInt bn = *this;
+
 	if (bn < 0 && mask < 0)
 	{
 		return ~(~bn & ~mask);
@@ -346,8 +413,10 @@ BigInt operator|(const BigInt& bn, const BigInt& mask)
 
 
 //// And
-BigInt operator&(const BigInt& bn, const BigInt& mask)
+BigInt BigInt::bitwise_and(const BigInt& mask) const
 {{{ 
+	BigInt bn = *this;
+
 	if (mask < 0 && bn < 0)
 	{
 		return ~(~bn | ~mask);
@@ -379,8 +448,10 @@ BigInt operator&(const BigInt& bn, const BigInt& mask)
 
 
 //// Xor
-BigInt operator^(const BigInt& bn, const BigInt& mask)
+BigInt BigInt::bitwise_xor(const BigInt& mask) const
 {{{ 
+	BigInt bn = *this;
+
 	if (bn < 0 && mask < 0)
 	{
 		return ~bn ^ ~mask;
@@ -422,15 +493,16 @@ BigInt operator^(const BigInt& bn, const BigInt& mask)
 //}}}
 
 //// Not
-BigInt operator~(const BigInt& bn)
-{{{
-	return -(bn + 1);
+BigInt BigInt::bitwise_not() const
+{{{ 
+	return -(*this + 1);
 }}}
 
 
 //// Bitshift
-BigInt operator<<(const BigInt& bn, int shift)
-{{{
+BigInt BigInt::bitshift_left(int shift) const
+{{{ 
+	BigInt bn = *this;
 	BigInt shifted;
 	int64_t carry = 0;
 
@@ -442,8 +514,8 @@ BigInt operator<<(const BigInt& bn, int shift)
 
 	for (int i = 0; i < bn.digits.size(); ++i)
 	{
-		shifted.digits.push_back(((bn.digits[i] << shift) | carry) & BigInt::base_mask);
-		carry = bn.digits[i] >> (BigInt::log2_base - shift);
+		shifted.digits.push_back(((int(bn.digits[i]) << shift) | carry) & BigInt::base_mask);
+		carry = int(bn.digits[i]) >> (BigInt::log2_base - shift);
 	}
 
 	if (carry) { shifted.digits.push_back(carry); }
@@ -452,8 +524,9 @@ BigInt operator<<(const BigInt& bn, int shift)
 }}}
 
 
-BigInt operator>>(const BigInt& bn, int shift)
-{{{
+BigInt BigInt::bitshift_right(int shift) const
+{{{ 
+	BigInt bn = *this;
 	BigInt shifted(bn);
 
 	while (shift >= BigInt::log2_base && shifted.digits.size() > 1)
@@ -495,64 +568,153 @@ BigInt operator>>(const BigInt& bn, int shift)
 //}}}
 
 
-//// Relationals
-bool operator==(const BigInt& left, const BigInt& right)
+int BigInt::least_significant_bit() const
+{{{ 
+	if (*this == 0) 
+	{
+		return 0;
+	}
+
+	// find first non-zero digit
+	int i = 0;
+	for(; (i < this->digits.size() && this->digits[i] == 0); ++i);
+
+	uint32_t digit = this->digits[i];
+	int lsb = 1;
+
+	while (!(digit & 1))
+	{
+		++lsb;
+		digit >>= 1;
+	}
+
+	return BigInt::log2_base * i + lsb;
+}}}
+
+
+int BigInt::most_significant_bit() const
 {{{
-	if ((left.sign != right.sign) || (left.digits.size() != right.digits.size())) 
+	int msb = BigInt::log2_base;
+	uint32_t digit = this->digits.back();
+
+	while (digit != 0 && !(digit & 0x20000000))
+	{
+		--msb;
+		digit <<= 1;
+	}
+
+	return BigInt::log2_base * (this->digits.size() - 1) + msb;
+}}}
+
+
+//// Relationals
+bool BigInt::is_equal_to(const BigInt& other) const
+{{{ 
+	if ((this->sign != other.sign) || (digits.size() != other.digits.size())) 
 	{ 
 		return false; 
 	}
 
 	int i;
-	for (i = 0; (i < left.digits.size()) && (left.digits[i] == right.digits[i]); ++i);
+	for (i = 0; (i < digits.size()) && (digits[i] == other.digits[i]); ++i);
 
-	return (i == left.digits.size());
+	return (i == digits.size());
 }}}
 
 
-bool operator!=(const BigInt& left, const BigInt& right)
-{{{
-	return !(left == right);
+bool BigInt::not_equal_to(const BigInt& other) const
+{{{ 
+	return !this->is_equal_to(other);
 }}}
 
 
-bool operator> (const BigInt& left, const BigInt& right)
-{{{
-	return (right < left);	
-}}}
-
-
-bool operator>=(const BigInt& left, const BigInt& right)
+bool BigInt::is_greater_than(const BigInt& other) const
 {{{  
-	return ((right < left) || (right == left));
+	return other.is_less_than(*this);	
 }}}
 
 
-bool operator< (const BigInt& left, const BigInt& right)
+bool BigInt::is_greater_or_equal_to(const BigInt& other) const
+{{{    
+	return (other.is_less_than(*this) || this->is_equal_to(other));
+}}}
+
+
+bool BigInt::is_less_than(const BigInt& other) const
+{{{   
+	if (this->sign != other.sign) 
+	{ 
+		return this->sign; 
+	}
+	if (this->digits.size() != other.digits.size()) 
+	{ 
+		// if *this has more digits than other and both are positive, other is greater -> true
+		// if *this has more digits than other and both are negative, *this is greater -> false
+		return (this->digits.size() < other.digits.size()) ^ this->sign; 
+	}
+
+	int i = this->digits.size() - 1;
+	for (; (i >= 0) && (this->digits[i] == other.digits[i]); --i);
+
+	return ((i == -1) || (this->digits[i] > other.digits[i])) == this->sign;
+}}}
+
+
+bool BigInt::is_less_or_equal_to(const BigInt& other) const
+{{{ 
+	return (this->is_less_than(other) || this->is_equal_to(other));
+}}}
+
+
+bool BigInt::is_absolute_equal_to(const BigInt& other) const
 {{{  
-	if (left.sign != right.sign) 
+	if (digits.size() != other.digits.size()) 
 	{ 
-		return left.sign; 
-	}
-	if (left.sign == true) 
-	{
-		return (-right < -left); 
-	}
-	if (left.digits.size() != right.digits.size()) 
-	{ 
-		return (left.digits.size() < right.digits.size()); 
+		return false; 
 	}
 
-	int i = left.digits.size() - 1;
-	for (; (i >= 0) && (left.digits[i] == right.digits[i]); --i);
+	int i;
+	for (i = 0; (i < digits.size()) && (digits[i] == other.digits[i]); ++i);
 
-	return !((i == -1) || (left.digits[i] > right.digits[i]));
+	return (i == digits.size());
 }}}
 
 
-bool operator<=(const BigInt& left, const BigInt& right)
-{{{
-	return ((left < right) || (left == right));
+bool BigInt::is_absolute_not_equal_to(const BigInt& other) const
+{{{ 
+	return !this->is_absolute_equal_to(other);
+}}}
+
+
+bool BigInt::is_absolute_greater_than(const BigInt& other) const
+{{{   
+	return other.is_absolute_less_than(*this);	
+}}}
+
+
+bool BigInt::is_absolute_greater_or_equal_to(const BigInt& other) const
+{{{     
+	return (other.is_absolute_less_than(*this) || this->is_absolute_equal_to(other));
+}}}
+
+
+bool BigInt::is_absolute_less_than(const BigInt& other) const
+{{{  
+	if (this->digits.size() != other.digits.size()) 
+	{ 
+		return (this->digits.size() < other.digits.size()); 
+	}
+
+	int i = this->digits.size() - 1;
+	for (; (i >= 0) && (this->digits[i] == other.digits[i]); --i);
+
+	return ((i != -1) && (this->digits[i] < other.digits[i]));
+}}}
+
+
+bool BigInt::is_absolute_less_or_equal_to(const BigInt& other) const
+{{{ 
+	return (this->is_absolute_less_than(other) || this->is_absolute_equal_to(other));
 }}}
 
 
@@ -589,5 +751,22 @@ void BigInt::trim_lz()
 	{
 		digits.pop_back();
 	}
+}}}
+
+
+std::pair<BigInt, BigInt> BigInt::chop(int cut) const
+{{{ 
+	if (cut >= this->digits.size())
+	{
+		return std::make_pair(*this, 0);
+	}
+
+	std::pair<BigInt, BigInt> result;
+	auto cut_iter = this->digits.begin() + cut;
+
+	result.first.digits.insert(result.first.digits.end(), this->digits.begin(), cut_iter);
+	result.second.digits.insert(result.second.digits.end(), cut_iter, this->digits.end());
+
+	return result;
 }}}
 

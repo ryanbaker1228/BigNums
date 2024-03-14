@@ -1,443 +1,391 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <array>
+#include <random>
+
+#include "benchmark_bignums.h"
 #include "bigint.h"
+#include "miniunit.h"
 
-
-
-typedef struct BenchmarkResult
-{
-	std::string operation;
-	int per_second;
-	int delta_perf;
-} BenchmarkResult;
-
-
-namespace benchmark_BigInt
-{
-	static void full_suite();
-	static BenchmarkResult addition();
-	static BenchmarkResult subtraction();
-	static BenchmarkResult multiplication();
-	static BenchmarkResult bitshifts();
-	static BenchmarkResult complements();
-
-	static void print_table_entry(BenchmarkResult br);
-}
 
 
 void benchmark_BigInt::full_suite()
-{{{  
-	std::cout << "----------------------------------------------------\n"
-			  << "|                |  # carried out |  X slower than |\n"
-	          << "|      operation |     per second |   native equiv |\n"
-			  << "----------------------------------------------------\n";
+{{{   
+	benchmark_BigInt::_addition();
+	benchmark_BigInt::_subtraction();
+	benchmark_BigInt::_multiplication();
+	benchmark_BigInt::_division();
+	benchmark_BigInt::_relationals();
+	benchmark_BigInt::_bitshifts();
+	benchmark_BigInt::_bitwise_and();
+	benchmark_BigInt::_bitwise_xor();
+	benchmark_BigInt::_bitwise_or();
 
-	benchmark_BigInt::print_table_entry(benchmark_BigInt::addition());
-	benchmark_BigInt::print_table_entry(benchmark_BigInt::subtraction());
-	benchmark_BigInt::print_table_entry(benchmark_BigInt::multiplication());
-	benchmark_BigInt::print_table_entry(benchmark_BigInt::bitshifts());
-	benchmark_BigInt::print_table_entry(benchmark_BigInt::complements());
-	//BenchmarkBigInt::print_table_entry(BenchmarkBigInt::division());
+	std::cout << '\n';
+
+	benchmark_BigInt::_giant_multiplication();
 }}}
 
 
-BenchmarkResult benchmark_BigInt::addition()
+void benchmark_BigInt::_addition()
 {{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
+	const int num_adds = 10000;
+
 	srand(time(NULL));
-	const int num_additions = 100000;
 
-	auto start = high_resolution_clock::now();
+	mu_tick();
 
-	for (int i = 0; i < num_additions; ++i)
+	for (int i = 0; i < num_adds; ++i)
 	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a + b;
+		BigInt A(rand());
+		BigInt B(rand());
+		
+		BigInt S(A + B);
 	}
-	auto end_bn = high_resolution_clock::now();
 
-	for (int i = 0; i < num_additions; ++i)
+	mu_tock();
+	const double addition = double(num_adds) / mu_duration();
+
+	mu_tick();
+
+	for (int i = 0; i < num_adds; ++i)
 	{
 		int64_t a = rand();
 		int64_t b = rand();
-		int64_t c = a + b;
+
+		int64_t s = a + b;
 	}
 
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+	mu_tock();
+	const double native_addition = double(num_adds) / mu_duration();
 
-	const int adds_per_second = 1e9 * num_additions / duration_bn.count();
-	const int perf_delta 	 = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "addition",
-		.per_second = adds_per_second,
-		.delta_perf = perf_delta,
-	};
+	mu_compare_to_native_process(addition, native_addition);
 }}}
 
 
-BenchmarkResult benchmark_BigInt::subtraction()
+void benchmark_BigInt::_subtraction()
+{{{
+	const int num_subs = 10000;
+
+	srand(time(NULL));
+
+	mu_tick();
+
+	for (int i = 0; i < num_subs; ++i)
+	{
+		BigInt A(rand());
+		BigInt B(rand());
+		
+		BigInt D(A - B);
+	}
+
+	mu_tock();
+	const double subtraction = double(num_subs) / mu_duration();
+
+	mu_tick();
+
+	for (int i = 0; i < num_subs; ++i)
+	{
+		int64_t a = rand();
+		int64_t b = rand();
+
+		int64_t d = a - b;
+	}
+
+	mu_tock();
+	const double native_subtraction = double(num_subs) / mu_duration();
+
+	mu_compare_to_native_process(subtraction, native_subtraction);
+}}}
+
+
+void benchmark_BigInt::_multiplication()
 {{{ 
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
+	const int num_muls = 10000;
+
 	srand(time(NULL));
-	const int num_subtractions = 100000;
 
-	auto start = high_resolution_clock::now();
+	mu_tick();
 
-	for (int i = 0; i < num_subtractions; ++i)
+	for (int i = 0; i < num_muls; ++i)
 	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a - b;
+		BigInt A(rand());
+		BigInt B(rand());
+		
+		BigInt P(A * B);
 	}
-	auto end_bn = high_resolution_clock::now();
 
-	for (int i = 0; i < num_subtractions; ++i)
+	mu_tock();
+	const double multiplication = double(num_muls) / mu_duration();
+
+	mu_tick();
+
+	for (int i = 0; i < num_muls; ++i)
 	{
 		int64_t a = rand();
 		int64_t b = rand();
-		int64_t c = a - b;
+
+		int64_t P = a * b;
 	}
 
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+	mu_tock();
+	const double native_multiplication = double(num_muls) / mu_duration();
 
-	const int subs_per_second = 1e9 * num_subtractions / duration_bn.count();
-	const int perf_delta 	  = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "subtraction",
-		.per_second = subs_per_second,
-		.delta_perf = perf_delta,
-	};
+	mu_compare_to_native_process(multiplication, native_multiplication);
 }}}
 
 
-BenchmarkResult benchmark_BigInt::multiplication()
-{{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
+void benchmark_BigInt::_division()
+{{{ 
+	const int num_divs = 1000;
+
 	srand(time(NULL));
-	const int num_mults= 100000;
 
-	auto start = high_resolution_clock::now();
+	mu_tick();
 
-	for (int i = 0; i < num_mults; ++i)
+	for (int i = 0; i < num_divs; ++i)
 	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a * b;
+		BigInt A(rand());
+		BigInt B(rand() % 511 + 1);
+		
+		BigInt Q(A / B);
 	}
-	auto end_bn = high_resolution_clock::now();
 
-	for (int i = 0; i < num_mults; ++i)
+	mu_tock();
+	const double division = double(num_divs) / mu_duration();
+
+	mu_tick();
+
+	for (int i = 0; i < num_divs; ++i)
+	{
+		int64_t a = rand();
+		int64_t b = rand() % 511 + 1;
+
+		int64_t q = a / b;
+	}
+
+	mu_tock();
+	const double native_division = double(num_divs) / mu_duration();
+
+	mu_compare_to_native_process(division, native_division);
+}}}
+
+
+void benchmark_BigInt::_relationals()
+{{{
+	const int num_comparisons = 10000;
+
+	srand(time(NULL));
+
+	mu_tick();
+
+	for (int i = 0; i < num_comparisons; ++i)
+	{
+		BigInt A(rand());
+		BigInt B(rand());
+		
+		bool eq = A == B;
+		bool ne = A != B;
+		bool gt = A >  B;
+		bool ge = A >= B;
+		bool lt = A <  B;
+		bool le = A <= B;
+	}
+
+	mu_tock();
+	const double relationals = double(num_comparisons) / mu_duration();
+
+	mu_tick();
+
+	for (int i = 0; i < num_comparisons; ++i)
 	{
 		int64_t a = rand();
 		int64_t b = rand();
-		int64_t c = a * b;
+
+		bool eq = a == b;
+		bool ne = a != b;
+		bool gt = a >  b;
+		bool ge = a >= b;
+		bool lt = a <  b;
+		bool le = a <= b;
 	}
 
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+	mu_tock();
+	const double native_relationals = double(num_comparisons) / mu_duration();
 
-	const int mults_per_second = 1e9 * num_mults / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "multiplication",
-		.per_second = mults_per_second,
-		.delta_perf = perf_delta,
-	};
-
+	mu_compare_to_native_process(relationals, native_relationals);
 }}}
 
 
-BenchmarkResult benchmark_BigInt::bitshifts()
+void benchmark_BigInt::_bitshifts()
 {{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
-	srand(time(NULL));
-	const int num_shifts= 10;
+	const int num_shifts = 10000;
 
-	auto start = high_resolution_clock::now();
+	srand(time(NULL));
+
+	mu_tick();
 
 	for (int i = 0; i < num_shifts; ++i)
 	{
-		BigInt a(rand());
-		int b(rand());
-		BigInt l = a << b;
-		BigInt h = a >> b;
+		BigInt A(rand());
+		int shift = rand() % 31;
+		
+		BigInt H(A << shift);
+		BigInt L(A >> shift);
 	}
-	auto end_bn = high_resolution_clock::now();
+
+	mu_tock();
+	const double bitshift = double(num_shifts) / mu_duration();
+
+	mu_tick();
 
 	for (int i = 0; i < num_shifts; ++i)
 	{
 		int64_t a = rand();
-		int64_t b = rand();
-		int64_t l = a << b;
-		int64_t h = a >> b;
+		int shift = rand() % 31;
+
+		int64_t h = a << shift;
+		int64_t l = a >> shift;
 	}
 
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+	mu_tock();
+	const double native_bitshift = double(num_shifts) / mu_duration();
 
-	const int shifts_per_second = 1e9 * num_shifts / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "bitshifts",
-		.per_second = shifts_per_second,
-		.delta_perf = perf_delta,
-	};
-
+	mu_compare_to_native_process(bitshift, native_bitshift);
 }}}
 
-BenchmarkResult benchmark_BigInt::complements()
+
+void benchmark_BigInt::_bitwise_and()
 {{{ 
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
+	const int num_ands = 10000;
+
 	srand(time(NULL));
-	const int num_complements = 100000;
 
-	auto start = high_resolution_clock::now();
-
-	for (int i = 0; i < num_complements; ++i)
-	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a * b;
-	}
-	auto end_bn = high_resolution_clock::now();
-
-	for (int i = 0; i < num_complements; ++i)
-	{
-		int64_t a = rand();
-		int64_t b = rand();
-		int64_t c = a * b;
-	}
-
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
-
-	const int complements_per_second = 1e9 * num_complements / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "complements",
-		.per_second = complements_per_second,
-		.delta_perf = perf_delta,
-	};
-
-}}}
-
-
-BenchmarkResult benchmark_BigInt::bitwise_and()
-{{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
-	srand(time(NULL));
-	const int num_ands = 100000;
-
-	auto start = high_resolution_clock::now();
+	mu_tick();
 
 	for (int i = 0; i < num_ands; ++i)
 	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a * b;
+		BigInt A(rand());
+		BigInt B(rand());
+		
+		BigInt M(A & B);
 	}
-	auto end_bn = high_resolution_clock::now();
 
-	for (int i = 0; i < num_mults; ++i)
+	mu_tock();
+	const double bitwise_and = double(num_ands) / mu_duration();
+
+	mu_tick();
+
+	for (int i = 0; i < num_ands; ++i)
 	{
 		int64_t a = rand();
 		int64_t b = rand();
-		int64_t c = a * b;
+
+		int64_t m = a & b;
 	}
 
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+	mu_tock();
+	const double native_bitwise_and = double(num_ands) / mu_duration();
 
-	const int mults_per_second = 1e9 * num_mults / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "multiplication",
-		.per_second = mults_per_second,
-		.delta_perf = perf_delta,
-	};
-
+	mu_compare_to_native_process(bitwise_and, native_bitwise_and);
 }}}
 
 
-BenchmarkResult benchmark_BigInt::bitwise_xor()
-{{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
+void benchmark_BigInt::_bitwise_xor()
+{{{ 
+	const int num_xors = 10000;
+
 	srand(time(NULL));
-	const int num_mults= 100000;
 
-	auto start = high_resolution_clock::now();
+	mu_tick();
 
-	for (int i = 0; i < num_mults; ++i)
+	for (int i = 0; i < num_xors; ++i)
 	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a * b;
+		BigInt A(rand());
+		BigInt B(rand());
+		
+		BigInt M(A ^ B);
 	}
-	auto end_bn = high_resolution_clock::now();
 
-	for (int i = 0; i < num_mults; ++i)
+	mu_tock();
+	const double bitwise_xor = double(num_xors) / mu_duration();
+
+	mu_tick();
+
+	for (int i = 0; i < num_xors; ++i)
 	{
 		int64_t a = rand();
 		int64_t b = rand();
-		int64_t c = a * b;
+
+		int64_t m = a ^ b;
 	}
 
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+	mu_tock();
+	const double native_bitwise_xor = double(num_xors) / mu_duration();
 
-	const int mults_per_second = 1e9 * num_mults / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "multiplication",
-		.per_second = mults_per_second,
-		.delta_perf = perf_delta,
-	};
-
+	mu_compare_to_native_process(bitwise_xor, native_bitwise_xor);
 }}}
 
 
-BenchmarkResult benchmark_BigInt::bitwise_or()
-{{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
-	
+void benchmark_BigInt::_bitwise_or()
+{{{ 
+	const int num_ors = 10000;
+
 	srand(time(NULL));
-	const int num_mults= 100000;
 
-	auto start = high_resolution_clock::now();
+	mu_tick();
 
-	for (int i = 0; i < num_mults; ++i)
+	for (int i = 0; i < num_ors; ++i)
 	{
-		BigInt a(rand());
-		BigInt b(rand());
-		BigInt c = a * b;
+		BigInt A(rand());
+		BigInt B(rand());
+		
+		BigInt M(A | B);
 	}
-	auto end_bn = high_resolution_clock::now();
 
-	for (int i = 0; i < num_mults; ++i)
+	mu_tock();
+	const double bitwise_or = double(num_ors) / mu_duration();
+
+	mu_tick();
+
+	for (int i = 0; i < num_ors; ++i)
 	{
 		int64_t a = rand();
 		int64_t b = rand();
-		int64_t c = a * b;
+
+		int64_t m = a | b;
 	}
 
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+	mu_tock();
+	const double native_bitwise_or = double(num_ors) / mu_duration();
 
-	const int mults_per_second = 1e9 * num_mults / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
-
-	return BenchmarkResult 
-	{ 
-		.operation  = "multiplication",
-		.per_second = mults_per_second,
-		.delta_perf = perf_delta,
-	};
-
+	mu_compare_to_native_process(bitwise_or, native_bitwise_or);
 }}}
 
 
-/*
-BenchmarkResult BenchmarkBigInt::division()
+void benchmark_BigInt::_giant_multiplication(int num_digits)
 {{{
-	using std::chrono::high_resolution_clock,
-		  std::chrono::duration_cast,
-		  std::chrono::nanoseconds;
+	std::string a(num_digits, '0');
+	std::string b(num_digits, '0');
 	
-	srand(time(NULL));
-	const int num_divs = 1;
+	srand(42);
 
-	auto start = high_resolution_clock::now();
-
-	for (int i = 0; i < num_divs; ++i)
+	for (int i = 0; i < num_digits; ++i)
 	{
-		BigInt a(rand());
-		BigInt b(rand() + 1);
-		BigInt c = a / b;
-	}
-	auto end_bn = high_resolution_clock::now();
-
-	for (int i = 0; i < num_divs; ++i)
-	{
-		int a = rand();
-		int b = rand() + 1;
-		int c = a / b;
+		a[i] += rand() % 10; 
+		b[i] += rand() % 10;
 	}
 
-	auto end_nn      = high_resolution_clock::now();
-	auto duration_bn = duration_cast<nanoseconds>(end_bn - start);
-	auto duration_nn = duration_cast<nanoseconds>(end_nn - end_bn);
+	BigInt A(a);
+	BigInt B(b);
 
-	const int divs_per_second = 1e9 * num_divs / duration_bn.count();
-	const int perf_delta 	   = duration_bn.count() / duration_nn.count();
+	mu_tick();
+	
+	BigInt C = A * B;
+	
+	mu_tock();
+	const double giant_multiplication = mu_duration();
 
-	return BenchmarkResult 
-	{ 
-		.operation  = "division",
-		.per_second = divs_per_second,
-		.delta_perf = perf_delta,
-	};
-
+	mu_show_bench_results(giant_multiplication);
 }}}
-*/
-
-void benchmark_BigInt::print_table_entry(BenchmarkResult br)
-{{{
-	std::cout << "|";
-	std::cout << std::setw(15) << br.operation;
-	std::cout << " |";
-	std::cout << std::setw(15) << br.per_second;
-	std::cout << " |";
-	std::cout << std::setw(15) << br.delta_perf;
-	std::cout << " |\n";
-	std::cout << std::string(52, '-') << std::endl;
-}}}
-
