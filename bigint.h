@@ -35,22 +35,96 @@ public:
 	//BigInt& operator=(int n);
 
 	//// Addition
-	BigInt plus(const BigInt& addend) const;
-	//friend BigInt operator+(const BigInt& addend_1, const int addend_2);
-	//friend BigInt operator+=(BigInt& addend_1, const BigInt& addend_2);
-	//friend BigInt operator+=(BigInt& addend_1, const int addend_2);
+	BigInt plus(const BigInt& addend) const
+	{{{  
+		if (addend.sign)
+		{
+			return this->minus(-addend);
+		}
+		if (this->sign)
+		{
+			return -((-(*this)).minus(addend));
+		}
+
+		BigInt sum;
+		int carry = 0;
+		int i = 0;
+
+		for (; i < std::min(this->digits.size(), addend.digits.size()); ++i)
+		{
+			int digit_sum = this->digits[i] + addend.digits[i] + carry;
+			sum.digits.push_back(digit_sum & BigInt::base_mask);
+			carry = digit_sum >> BigInt::log2_base;
+		}
+
+		for (; i < this->digits.size(); ++i)
+		{
+			int digit_sum = this->digits[i] + carry;
+			sum.digits.push_back(digit_sum & BigInt::base_mask);
+			carry = digit_sum >> BigInt::log2_base;
+		}
+
+		for (; i < addend.digits.size(); ++i)
+		{
+			int digit_sum = addend.digits[i] + carry;
+			sum.digits.push_back(digit_sum & BigInt::base_mask);
+			carry = digit_sum >> BigInt::log2_base;
+		}
+
+		if (carry) { sum.digits.push_back(carry); }
+
+		return sum;
+	}}}
 
 	//// Subtraction
-	BigInt minus(const BigInt& subtrahend) const;
-	//friend BigInt operator-(const BigInt& minuend, const int subtrahend);
-	//friend BigInt operator-=(BigInt& minuend, const BigInt& subtrahend);
-	//friend BigInt operator-=(BigInt& minuend, const int subtrahend);
+	BigInt minus(const BigInt& subtrahend) const
+	{{{
+		if (this->is_less_than(subtrahend))
+		{
+			return -(subtrahend.minus(*this));
+		}
+		if (this->sign)
+		{
+			return -(-(*this).plus(-subtrahend));
+		}
+		if (subtrahend.sign)
+		{
+			return (this->plus(-subtrahend));
+		}
+
+		BigInt diff;
+		int borrow = 0;
+		int i = 0;
+
+		for (; i < subtrahend.digits.size(); ++i)
+		{
+			int digit_diff = this->digits[i] - subtrahend.digits[i] - borrow;
+			diff.digits.push_back(digit_diff % BigInt::base);
+			borrow = (digit_diff < 0);
+		}
+
+		for (; i < this->digits.size(); ++i)
+		{
+			int digit_diff = this->digits[i] - borrow;
+			diff.digits.push_back(digit_diff % BigInt::base);
+			borrow = (digit_diff < 0);
+		}
+
+		return diff;
+	}}}
+
 
 	//// Multiplication
-	BigInt multiply(const BigInt& factor) const;
-	//friend BigInt operator*(const BigInt& factor_1, const int factor_2);
-	//friend BigInt operator*=(BigInt& factor_1, const BigInt& factor_2);
-	//friend BigInt operator*=(BigInt& factor_1, const int factor_2);
+	BigInt multiply(const BigInt& factor) const
+	{{{  
+		BigInt product;
+
+		product = this->grade_school_multiply(factor);
+
+		return (this->sign == factor.sign) ? product : -product;
+	}}}
+
+
 
 	//// Division
 	BigInt divide(const BigInt& divisor) const;

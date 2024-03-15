@@ -18,6 +18,7 @@ namespace benchmark_BigInt
 	void _bitwise_or();
 
 	void _giant_multiplication(int num_digits = 12000);
+	void _factorial();
 }
 
 

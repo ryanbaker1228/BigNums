@@ -25,6 +25,7 @@ void benchmark_BigInt::full_suite()
 	std::cout << '\n';
 
 	benchmark_BigInt::_giant_multiplication();
+	benchmark_BigInt::_factorial();
 }}}
 
 
@@ -365,7 +366,7 @@ void benchmark_BigInt::_bitwise_or()
 
 
 void benchmark_BigInt::_giant_multiplication(int num_digits)
-{{{
+{{{ 
 	std::string a(num_digits, '0');
 	std::string b(num_digits, '0');
 	
@@ -389,3 +390,23 @@ void benchmark_BigInt::_giant_multiplication(int num_digits)
 
 	mu_show_bench_results(giant_multiplication);
 }}}
+
+
+void benchmark_BigInt::_factorial()
+{{{
+	int n = 10000;
+	BigInt f(n);
+
+	mu_tick();
+
+	for (; n > 0; --n)
+	{
+		f = f * n;
+	}
+
+	mu_tock();
+	const double factorial = mu_duration();
+
+	mu_show_bench_results(factorial);
+}}}
+

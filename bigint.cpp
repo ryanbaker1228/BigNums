@@ -69,46 +69,6 @@ BigInt::BigInt(std::string s)
 
 
 // Addition
-BigInt BigInt::plus(const BigInt& addend) const
-{{{   
-	if (addend < 0)
-	{
-		return (*this - -addend);
-	}
-	if (*this < 0)
-	{
-		return -(-*this - addend);
-	}
-
-	BigInt sum;
-	int carry = 0;
-	int i = 0;
-
-	for (; i < std::min(this->digits.size(), addend.digits.size()); ++i)
-	{
-		int digit_sum = this->digits[i] + addend.digits[i] + carry;
-		sum.digits.push_back(digit_sum & BigInt::base_mask);
-		carry = digit_sum >> BigInt::log2_base;
-	}
-
-	for (; i < this->digits.size(); ++i)
-	{
-		int digit_sum = this->digits[i] + carry;
-		sum.digits.push_back(digit_sum & BigInt::base_mask);
-		carry = digit_sum >> BigInt::log2_base;
-	}
-
-	for (; i < addend.digits.size(); ++i)
-	{
-		int digit_sum = addend.digits[i] + carry;
-		sum.digits.push_back(digit_sum & BigInt::base_mask);
-		carry = digit_sum >> BigInt::log2_base;
-	}
-
-	if (carry) { sum.digits.push_back(carry); }
-
-	return sum;
-}}}
 
 
 //BigInt operator+(const BigInt& addend_1, const int addend_2)
@@ -127,42 +87,6 @@ BigInt BigInt::plus(const BigInt& addend) const
 
 
 // Subtraction
-BigInt BigInt::minus(const BigInt& subtrahend) const
-{{{
-	if (*this < subtrahend)
-	{
-		return -(subtrahend - *this);
-	}
-	if (*this < 0)
-	{
-		return -(-*this - -subtrahend);
-	}
-	if (subtrahend < 0)
-	{
-		return (*this + -subtrahend);
-	}
-
-	BigInt diff;
-	int borrow = 0;
-	int i = 0;
-
-	for (; i < subtrahend.digits.size(); ++i)
-	{
-		int digit_diff = this->digits[i] - subtrahend.digits[i] - borrow;
-		diff.digits.push_back(digit_diff % BigInt::base);
-		borrow = (digit_diff < 0);
-	}
-
-	for (; i < this->digits.size(); ++i)
-	{
-		int digit_diff = this->digits[i] - borrow;
-		diff.digits.push_back(digit_diff % BigInt::base);
-		borrow = (digit_diff < 0);
-	}
-
-	return diff;
-}}}
-
 
 //BigInt operator-(const BigInt& minuend, const int subtrahend)
 //{{{
@@ -180,14 +104,6 @@ BigInt BigInt::minus(const BigInt& subtrahend) const
 
 
 // Multiplication
-BigInt BigInt::multiply(const BigInt& factor) const
-{{{  
-	BigInt product;
-
-	product = this->grade_school_multiply(factor);
-
-	return (this->sign == factor.sign) ? product : -product;
-}}}
 
 
 //BigInt operator*(const BigInt& factor_1, const int factor_2)
@@ -329,8 +245,25 @@ BigInt BigInt::recursive_bitshift_divide(const BigInt& divisor) const
 
 
 /*
-BigInt BigInt::knuth_divide(const BigInt& other) const
+BigInt BigInt::knuth_divide(const BigInt& divisor) const
 {{{
+	if (this->digits.size() >= 6)
+	{
+		int tz_count = std::min(this->least_significant_bit, divisor.least_significant_bit) + 1;
+
+		if (tz_count > 300)
+		{
+			BigInt a(*this);
+
+			a.bitshift_right(tz_count);
+			divisor.bitshift_right(tz_count);
+
+			BigInt
+}}}
+
+
+BigInt BigInt::knuth_divide(const BigInt& other) const
+{{{ 
 	
 }}}*/
 
