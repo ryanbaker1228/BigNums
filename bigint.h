@@ -11,7 +11,7 @@
 class BigInt
 {
 private:
-	std::deque<uint32_t> digits;
+	std::vector<uint32_t> digits;
 	bool sign; // 0 = positive; 1 = negative
 
 	static constexpr uint32_t base = 1 << 30;
@@ -22,6 +22,7 @@ private:
 	BigInt karatsuba_multiply(const BigInt& factor) const;
 
 	BigInt recursive_bitshift_divide(const BigInt& divisor) const;
+	BigInt knuth_divide_and_remainder(const BigInt& divisor, BigInt* quotient) const;
 
 	std::pair<BigInt, BigInt> chop(int cut) const;
 
@@ -47,6 +48,7 @@ public:
 		}
 
 		BigInt sum;
+		sum.digits.reserve(std::max(this->digits.size(), addend.digits.size()));
 		int carry = 0;
 		int i = 0;
 
@@ -76,6 +78,7 @@ public:
 		return sum;
 	}}}
 
+
 	//// Subtraction
 	BigInt minus(const BigInt& subtrahend) const
 	{{{
@@ -93,6 +96,7 @@ public:
 		}
 
 		BigInt diff;
+		diff.digits.reserve(std::max(this->digits.size(), subtrahend.digits.size()));
 		int borrow = 0;
 		int i = 0;
 
@@ -110,6 +114,7 @@ public:
 			borrow = (digit_diff < 0);
 		}
 
+		diff.trim_lz();
 		return diff;
 	}}}
 
@@ -193,6 +198,8 @@ public:
 	//friend std::istream& operator>>(std::istream& in , const BigInt& bn);
 	void disect() const;
 	void trim_lz();
+
+	BigInt abs() const;
 };
 
 

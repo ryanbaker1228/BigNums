@@ -130,6 +130,8 @@ BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 		int64_t carry = 0;
 		BigInt  current_sum;
 
+		for (int j = 0; j < i; ++j) { current_sum.digits.push_back(0); }
+
 		for (int j = 0; j < this->digits.size(); ++j)
 		{
 			uint64_t current_prod = uint64_t(this->digits[j])
@@ -140,8 +142,6 @@ BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 		}
 
 		if (carry > 0) { current_sum.digits.push_back(carry); }
-
-		for (int j = 0; j < i; ++j) { current_sum.digits.push_front(0); }
 
 		product = product + current_sum;
 	}
@@ -221,26 +221,66 @@ BigInt BigInt::recursive_bitshift_divide(const BigInt& divisor) const
 	{
 		return 1;
 	}
-
+	
 	BigInt quotient(1);
 	BigInt accumulator(divisor);
-	accumulator.sign = false;
 	BigInt trim(*this);
-	trim.sign = false;
 	trim.trim_lz();
+	trim.sign = false;
+	accumulator.sign = false;
 
 	int shift = trim.most_significant_bit() - divisor.most_significant_bit();
 
 	quotient = quotient << shift;
 	accumulator = accumulator << shift;
 
-	if (accumulator > trim)
+	if (accumulator.is_absolute_greater_than(trim))
 	{
 		accumulator = accumulator >> 1;
 		quotient = quotient >> 1;
 	}
-
+	
 	return quotient + (trim-accumulator).recursive_bitshift_divide(divisor);
+}}}
+
+
+BigInt BigInt::knuth_divide_and_remainder(const BigInt& divisor, BigInt* quotient) const
+{{{
+	if (this->is_equal_to(0))
+	{
+		*quotient = 0;
+		return 0;
+	}
+	if (this->is_absolute_less_than(divisor))
+	{
+		*quotient = 0;
+		return *this;
+	}
+	if (this->is_absolute_equal_to(divisor))
+	{
+		*quotient = 1;
+		return 0;
+	}
+
+	quotient->digits.clear();
+
+	if (this->digits.size() > 0)
+	{
+		int tz_count = std::min(this->least_significant_bit(), divisor.least_significant_bit());
+
+		if (tz_count >= BigInt::base * 0)
+		{
+			BigInt a(*this);
+			BigInt b(divisor);
+			a = a.bitshift_right(tz_count);
+			b = b.bitshift_right(tz_count);
+			BigInt remainder = a.knuth_divide_and_remainder(b, quotient);
+			remainder.bitshift_left(tz_count);
+			return remainder;
+		}
+	}
+
+	return 0;
 }}}
 
 
@@ -435,7 +475,11 @@ BigInt BigInt::bitwise_not() const
 //// Bitshift
 BigInt BigInt::bitshift_left(int shift) const
 {{{ 
-	BigInt bn = *this;
+	if (this->is_equal_to(0)) 
+	{
+		return 0;
+	}
+
 	BigInt shifted;
 	int64_t carry = 0;
 
@@ -445,10 +489,10 @@ BigInt BigInt::bitshift_left(int shift) const
 		shifted.digits.push_back(0);
 	}
 
-	for (int i = 0; i < bn.digits.size(); ++i)
+	for (int i = 0; i < this->digits.size(); ++i)
 	{
-		shifted.digits.push_back(((int(bn.digits[i]) << shift) | carry) & BigInt::base_mask);
-		carry = int(bn.digits[i]) >> (BigInt::log2_base - shift);
+		shifted.digits.push_back(((int(this->digits[i]) << shift) | carry) & BigInt::base_mask);
+		carry = int(this->digits[i]) >> (BigInt::log2_base - shift);
 	}
 
 	if (carry) { shifted.digits.push_back(carry); }
@@ -459,17 +503,21 @@ BigInt BigInt::bitshift_left(int shift) const
 
 BigInt BigInt::bitshift_right(int shift) const
 {{{ 
-	BigInt bn = *this;
-	BigInt shifted(bn);
+	BigInt shifted;
+	int truncation = 0;
 
-	while (shift >= BigInt::log2_base && shifted.digits.size() > 1)
+	while (shift >= BigInt::log2_base && truncation < this->digits.size())
 	{
 		shift -= BigInt::log2_base;
-		shifted.digits.pop_front();
+		++truncation;
 	}
-	if (shift >= BigInt::log2_base)
+	if (shift >= BigInt::log2_base || truncation >= this->digits.size())
 	{
 		return 0;
+	}
+	for (; truncation < this->digits.size(); ++truncation)
+	{
+		shifted.digits.push_back(this->digits[truncation]);
 	}
 
 	const int borrow_mask = (1 << shift) - 1;
@@ -527,6 +575,11 @@ int BigInt::least_significant_bit() const
 
 int BigInt::most_significant_bit() const
 {{{
+	if (this->is_equal_to(0))
+	{
+		return 0;
+	}
+
 	int msb = BigInt::log2_base;
 	uint32_t digit = this->digits.back();
 
@@ -701,5 +754,13 @@ std::pair<BigInt, BigInt> BigInt::chop(int cut) const
 	result.second.digits.insert(result.second.digits.end(), cut_iter, this->digits.end());
 
 	return result;
+}}}
+
+
+BigInt BigInt::abs() const
+{{{
+	BigInt a(*this);
+	a.sign = false;
+	return a;
 }}}
 

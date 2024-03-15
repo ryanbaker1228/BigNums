@@ -1,32 +1,29 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
-#include <array>
 #include <random>
 
-#include "benchmark_bignums.h"
 #include "bigint.h"
 #include "miniunit.h"
 
 
 
-void benchmark_BigInt::full_suite()
-{{{   
-	benchmark_BigInt::_addition();
-	benchmark_BigInt::_subtraction();
-	benchmark_BigInt::_multiplication();
-	benchmark_BigInt::_division();
-	benchmark_BigInt::_relationals();
-	benchmark_BigInt::_bitshifts();
-	benchmark_BigInt::_bitwise_and();
-	benchmark_BigInt::_bitwise_xor();
-	benchmark_BigInt::_bitwise_or();
+namespace benchmark_BigInt
+{
+	void _addition();
+	void _subtraction();
+	void _multiplication();
+	void _division();
+	void _relationals();
+	void _bitshifts();
+	void _bitwise_and();
+	void _bitwise_xor();
+	void _bitwise_or();
 
-	std::cout << '\n';
+	void _giant_multiplication(int num_digits = 12000);
+	void _factorial();
+}
 
-	benchmark_BigInt::_giant_multiplication();
-	benchmark_BigInt::_factorial();
-}}}
 
 
 void benchmark_BigInt::_addition()
@@ -408,5 +405,24 @@ void benchmark_BigInt::_factorial()
 	const double factorial = mu_duration();
 
 	mu_show_bench_results(factorial);
+}}}
+
+
+int main()
+{{{   
+	benchmark_BigInt::_addition();
+	benchmark_BigInt::_subtraction();
+	benchmark_BigInt::_multiplication();
+	benchmark_BigInt::_division();
+	benchmark_BigInt::_relationals();
+	benchmark_BigInt::_bitshifts();
+	benchmark_BigInt::_bitwise_and();
+	benchmark_BigInt::_bitwise_xor();
+	benchmark_BigInt::_bitwise_or();
+
+	std::cout << '\n';
+
+	benchmark_BigInt::_giant_multiplication();
+	benchmark_BigInt::_factorial();
 }}}
 
