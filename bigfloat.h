@@ -1,66 +1,26 @@
 #ifndef BIGFLOAT_H_INCLUDED
 #define BIGFLOAT_H_INCLUDED
 
-#include <iostream>
-#include <string>
-#include <deque>
 
 
-
-class BigFloat 
+class BigFloat
 {
 private:
 	BigInt mantissa;
 	BigInt exponent;
-	
+
+
 public:
-	BigFloat() 
-	{
-		mantissa.reset();
-		exponent.reset();
-	}
-	template <typename T>
-	BigFloat(const T& input) { *this = input; }
+	BigFloat();
+	BigFloat(double d);
+	BigFloat(int64_t n);
+	BigFloat(const std::string& s);
 
-	template <typename T>
-	BigFloat& operator=(const T& input) 
-	{ 
-		*this = std::to_string(input); 
-		return *this; 
-	}
-	BigFloat& operator=(std::string s);
-	BigFloat& operator=(const char *s);
-
-	std::string to_string() const;
-
-	friend BigFloat operator+(const BigFloat& left, const BigFloat& right);
-	friend BigFloat operator-(const BigFloat& left, const BigFloat& right);
-	friend BigFloat operator*(const BigFloat& left, const BigFloat& right);
-	friend BigFloat operator/(const BigFloat& left, const BigFloat& right);
-	friend BigFloat operator%(const BigFloat& left, const BigFloat& right);
-
-	BigFloat operator-() const;
-	BigFloat operator+() const;
 	
-	BigFloat& operator++() 	{ *this += 1; return *this; }
-	BigFloat  operator++(int) { BigFloat r(*this); ++(*this); return r; }
-	BigFloat& operator--() 	{ *this -= 1; return *this; }
-	BigFloat  operator--(int) { BigFloat r(*this); --(*this); return r; }
-
-	friend bool operator==(const BigFloat& left, const BigFloat& right);
-	friend bool operator!=(const BigFloat& left, const BigFloat& right);
-	friend bool operator< (const BigFloat& left, const BigFloat& right);
-	friend bool operator<=(const BigFloat& left, const BigFloat& right);
-	friend bool operator> (const BigFloat& left, const BigFloat& right);
-	friend bool operator>=(const BigFloat& left, const BigFloat& right);
-
-	friend BigFloat operator+=(BigFloat& left, const BigFloat& right);
-	friend BigFloat operator-=(BigFloat& left, const BigFloat& right);
-	friend BigFloat operator*=(BigFloat& left, const BigFloat& right);
-	friend BigFloat operator/=(BigFloat& left, const BigFloat& right);
-	friend BigFloat operator%=(BigFloat& left, const BigFloat& right);
-
-	friend std::ostream& operator<<(std::ostream& out, const BigFloat& bn);
+	BigFloat plus(const BigFloat& addend) const;
+	BigFloat minus(const BigFloat& subtrahend) const;
+	BigFloat multiply(const BigFloat& factor) const;
+	BigFloat divide(const BigFloat& divisor) const;
 };
 
 

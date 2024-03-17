@@ -22,34 +22,96 @@ BigInt::BigInt(int64_t n)
 }}}
 
 
-BigInt::BigInt(std::string s)
+BigInt::BigInt(const std::string& s, int radix)
 {{{
-	const int chunk_size = 9;
-	bool is_negative = false;
+	int cursor = 0;
 
-	if (s[0] == '-')
+	if (radix < 2 || radix > 36)
 	{
-		is_negative = true;
-		s = s.substr(1);
+		throw std::invalid_argument("Error, expected range between [2, 36].");
+	}
+	if (s.length() == 0)
+	{
+		throw std::invalid_argument("Error, zero length string passed to BigInt constructor.");
 	}
 
-	const int final_chunk_size = s.length() % chunk_size;
+	int index_plus  = s.find_last_of('+');
+	int index_minus = s.find_last_of('-');
+
+	if (index_plus == 0)
+	{
+		this->sign = false;
+		cursor = 1;
+	}
+	else if (index_minus == 0)
+	{
+		this->sign = true;
+		cursor = 1;
+	}
+	else if (index_plus < 0 && index_minus < 0)
+	{
+		this->sign = false;
+		cursor = 0;
+	}
+	else 
+	{
+		throw std::invalid_argument("Error, illegal sign character passed to BigInt constructor.");
+	}
+
+	if (cursor == s.length())
+	{
+		throw new std::invalid_argument("Error, zero digit length string passed to BigInt constructor.");
+	}
+
+	while (cursor < s.length() && s[cursor] == '0')
+	{
+		++cursor;
+	}
+
+	if (cursor == s.length())
+	{
+		this->digits = {0};
+		this->sign = false;
+		return;
+	}
+
+	int 	 num_digits = s.length() - cursor;
+	uint64_t num_bits   = ((num_digits * BigInt::BITS_PER_DIGIT[radix]) >> 10) + 1;
+	uint64_t num_words  = (num_bits + 31) >> 5;
+
+	this->digits.clear();
+	this->digits.reserve(num_words);
+
+	int first_group_length = num_digits % BigInt::CHARACTERS_PER_BIGINT_DIGIT[radix];
+	if (first_group_length == 0) { 
+		first_group_length = BigInt::CHARACTERS_PER_BIGINT_DIGIT[radix]; 
+	}
+
+	std::string group = s.substr(cursor, first_group_length);
+	cursor += first_group_length;
 	
-	*this = 0;
-
-	for (int i = 0; i+chunk_size <= s.length(); i += chunk_size)
+	this->digits.push_back(std::stoi(group, nullptr, radix));
+	if (this->digits.back() < 0)
 	{
-		*this = *this * 1e9;
-		*this = *this + std::stoi(s.substr(i, chunk_size));
+		throw std::runtime_error("Illegal digit passed to BigInt constructor.");
 	}
+
+	uint64_t max_group_value = BigInt::MAX_GROUP_SIZE[radix];
+	uint64_t group_value 	 = 0;
 	
-	if (final_chunk_size > 0)
+	for (; cursor < s.length(); cursor += BigInt::CHARACTERS_PER_BIGINT_DIGIT[radix])
 	{
-		*this = *this * std::pow(10, final_chunk_size);
-		*this = *this + std::stoi(s.substr(s.length() - final_chunk_size, final_chunk_size));
-	}
+		group = s.substr(cursor, BigInt::CHARACTERS_PER_BIGINT_DIGIT[radix]);
+		group_value = std::stoi(group, nullptr, radix);
+		
+		if (group_value < 0)
+		{
+			throw std::runtime_error("Illegal digit passed to BigInt constructor.");
+		}
 
-	sign = *this != 0 && is_negative;
+		this->multiply_in_place(max_group_value);
+		this->add_in_place(group_value);
+	}
 }}}
 
 
@@ -69,6 +131,24 @@ BigInt::BigInt(std::string s)
 
 
 // Addition
+
+
+void BigInt::add_in_place(const int addend)
+{{{
+	int carry = 0;
+
+	for (int i = 0; i < this->digits.size(); ++i)
+	{
+		int sum = this->digits[i] + carry + addend * (i == 0);
+		this->digits[i] = sum & BigInt::base_mask;
+		carry = sum >> BigInt::log2_base;
+	}
+
+	if (carry)
+	{
+		this->digits.push_back(carry);
+	}
+}}}
 
 
 //BigInt operator+(const BigInt& addend_1, const int addend_2)
@@ -124,6 +204,7 @@ BigInt::BigInt(std::string s)
 BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 {{{ 
 	BigInt product(0);
+	product.digits.reserve(this->digits.size() + factor.digits.size());
 
 	for (int i = 0; i < factor.digits.size(); ++i)
 	{
@@ -152,26 +233,47 @@ BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 
 BigInt BigInt::karatsuba_multiply(const BigInt& factor) const
 {{{
-	const int mid_point = (1 + std::max(this->digits.size(), factor.digits.size())) / 2;
+	const int half = (1 + std::max(this->digits.size(), factor.digits.size())) / 2;
 
-	std::pair<BigInt, BigInt> a = this->chop(mid_point);
-	std::pair<BigInt, BigInt> b = factor.chop(mid_point);
+	BigInt a_hi, a_lo, b_hi, b_lo;
+	a_hi.digits = std::vector<uint32_t>(this->digits.begin() + half, this->digits.end());
+	a_lo.digits = std::vector<uint32_t>(this->digits.begin(), this->digits.begin() + half);
+	b_hi.digits = std::vector<uint32_t>(factor.digits.begin() + half, factor.digits.end());
+	b_lo.digits = std::vector<uint32_t>(factor.digits.begin(), factor.digits.begin() + half);
 
-	BigInt prod_lo = a.first.multiply(b.first);
-	BigInt prod_hi = a.second.multiply(b.second);
-	BigInt prod_md = (a.second.plus(a.first)).multiply(b.second.plus(b.first));
+	BigInt prod_lo = a_lo.multiply(b_lo);
+	BigInt prod_hi = a_hi.multiply(b_hi);
+	BigInt prod_md = (a_hi.plus(a_lo)).multiply(b_hi.plus(b_lo));
 
-	BigInt product = (prod_hi << (2 * BigInt::base * mid_point))
-				   + (prod_md - prod_hi - prod_lo) + (BigInt::base * mid_point)
+	BigInt product = (prod_hi << (2 * BigInt::base * half))
+				   + (prod_md - prod_hi - prod_lo) + (BigInt::base * half)
 				   + prod_lo;
 
 	return product;
 }}}
 
 
+void BigInt::multiply_in_place(const int factor)
+{{{
+	uint64_t carry = 0;
+
+	for (int i = 0; i < this->digits.size(); ++i)
+	{
+		uint64_t product = uint64_t(this->digits[i] & BigInt::base_mask) * factor + carry;
+		this->digits[i] = product & BigInt::base_mask;
+		carry = product >> BigInt::log2_base;
+	}
+
+	if (carry) 
+	{
+		this->digits.push_back(carry);
+	}
+}}}
+
+
 // Division
 BigInt BigInt::divide(const BigInt& divisor) const
-{{{  
+{{{   
 	if (divisor == 0)
 	{
 		throw std::runtime_error("Error, attempted BigInt division by 0.");
@@ -737,23 +839,6 @@ void BigInt::trim_lz()
 	{
 		digits.pop_back();
 	}
-}}}
-
-
-std::pair<BigInt, BigInt> BigInt::chop(int cut) const
-{{{ 
-	if (cut >= this->digits.size())
-	{
-		return std::make_pair(*this, 0);
-	}
-
-	std::pair<BigInt, BigInt> result;
-	auto cut_iter = this->digits.begin() + cut;
-
-	result.first.digits.insert(result.first.digits.end(), this->digits.begin(), cut_iter);
-	result.second.digits.insert(result.second.digits.end(), cut_iter, this->digits.end());
-
-	return result;
 }}}
 
 
