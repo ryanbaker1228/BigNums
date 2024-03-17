@@ -44,6 +44,22 @@ def _bigint_multiplication_test() -> str:
 	return test + "}}}\n\n"
 
 
+def _bigint_bitshift_test() -> str:
+	test: str = "// BITSHIFTS\n{{{\n"
+	num_tests: int = 100
+
+	for i in range(num_tests):
+		left:  int = random.randrange(-2**2048, 2**2048)
+		shift: int = random.randrange(0, 2048)
+		high:  int = left << shift
+		low:   int = left >> shift
+
+		test += "mu_assert((BigInt(\"" + str(left) + "\") << " + str(shift) + ") == BigInt(\"" + str(high) + "\"));\n"
+		test += "mu_assert((BigInt(\"" + str(left) + "\") >> " + str(shift) + ") == BigInt(\"" + str(low) + "\"));\n"
+
+	return test + "}}}\n\n"
+
+
 def write_bigint_tests() -> None:
 	write_location  = "test_bignums.cpp"
 	safe_copy 		= "copy_of_test_bignums.cpp"
@@ -58,29 +74,38 @@ def write_bigint_tests() -> None:
 			copy.writelines(lines)
 			copy.close()
 
-		start_idx, end_idx = -1, -1
+		try:
+			start_idx, end_idx = -1, -1
 
-		for i, line in enumerate(lines):
-			if start_delimiter in line:
-				start_idx = i
-			elif end_delimiter in line:
-				end_idx = i
-				break
+			for i, line in enumerate(lines):
+				if start_delimiter in line:
+					start_idx = i
+				elif end_delimiter in line:
+					end_idx = i
+					break
 
-		assert(end_idx > start_idx and start_idx > -1)
+			assert(end_idx > start_idx and start_idx > -1)
 
-		file.seek(0)
-		file.truncate()
+			file.seek(0)
+			file.truncate()
 
-		file.writelines(lines[:start_idx + 1])
+			file.writelines(lines[:start_idx + 1])
 
-		file.write('\n')
-		file.write(_bigint_addition_test())
-		file.write(_bigint_subtraction_test())
-		file.write(_bigint_multiplication_test())
+			file.write('\n')
+			file.write(_bigint_addition_test())
+			file.write(_bigint_subtraction_test())
+			file.write(_bigint_multiplication_test())
+			file.write(_bigint_bitshift_test())
 
-		file.writelines(lines[end_idx:])
+			file.writelines(lines[end_idx:])
 
+		except:
+			print("An error occured, stopping process")
+			file.seek(0)
+			file.truncate()
+			file.writelines(lines)
+			file.close()
+			
 
 write_bigint_tests()
 

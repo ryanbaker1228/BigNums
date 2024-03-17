@@ -599,12 +599,12 @@ BigInt BigInt::bitshift_left(int shift) const
 
 	if (carry) { shifted.digits.push_back(carry); }
 
-	return shifted;
+	return this->sign ? -shifted : shifted;
 }}}
 
 
 BigInt BigInt::bitshift_right(int shift) const
-{{{ 
+{{{  
 	BigInt shifted;
 	int truncation = 0;
 
@@ -637,7 +637,7 @@ BigInt BigInt::bitshift_right(int shift) const
 		shifted.digits.pop_back();
 	}
 
-	return shifted;
+	return this->sign ? -shifted : shifted;
 }}}
 
 
