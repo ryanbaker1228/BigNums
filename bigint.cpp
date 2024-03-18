@@ -606,38 +606,41 @@ BigInt BigInt::bitshift_left(int shift) const
 BigInt BigInt::bitshift_right(int shift) const
 {{{  
 	BigInt shifted;
-	int truncation = 0;
+	int i = 0;
 
-	while (shift >= BigInt::log2_base && truncation < this->digits.size())
+	for (; shift >= BigInt::log2_base && i < this->digits.size(); ++i)
 	{
 		shift -= BigInt::log2_base;
-		++truncation;
 	}
-	if (shift >= BigInt::log2_base || truncation >= this->digits.size())
+	if (i == this->digits.size() || this->is_equal_to(0))
 	{
 		return 0;
-	}
-	for (; truncation < this->digits.size(); ++truncation)
-	{
-		shifted.digits.push_back(this->digits[truncation]);
 	}
 
 	const int borrow_mask = (1 << shift) - 1;
 
-	for (int i = 0; i < shifted.digits.size()-1; ++i)
+	for (; i < this->digits.size() - 1; ++i)
 	{
-		shifted.digits[i] >>= shift;
-		shifted.digits[i] |= (shifted.digits[i+1] & borrow_mask) << (BigInt::log2_base - shift);
+		shifted.digits.push_back(
+			(this->digits[i] >> shift) | 
+			((this->digits[i + 1] & borrow_mask) << (BigInt::log2_base - shift))
+		);
 	}
 
-	shifted.digits.back() >>= shift;
+	const int most_significant_digit = this->digits.back() >> shift;
 
-	while (shifted.digits.back() == 0 && shifted.digits.size() > 1)
+	if (most_significant_digit) 
+	{ 
+		shifted.digits.push_back(most_significant_digit); 
+	}
+	if (shifted.digits.size() == 0)
 	{
-		shifted.digits.pop_back();
+		return 0;
 	}
 
-	return this->sign ? -shifted : shifted;
+	shifted.sign = false;
+
+	return this->sign ? ~shifted : shifted;
 }}}
 
 
@@ -827,7 +830,7 @@ void BigInt::disect() const
 	std::cout << (sign ? '-' : '+');
 	for (int i = digits.size()-1; i > 0; --i)
 	{
-		std::cout << digits[i] << "*2^" << (30 * i) << " + ";
+		std::cout << digits[i] << "*2**" << (30 * i) << " + ";
 	}
 	std::cout << digits[0] << '\n';
 }}}

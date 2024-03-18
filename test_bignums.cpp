@@ -279,7 +279,7 @@ int test_BigInt::_bitshifts()
 	mu_assert(BigInt(2) >> 1 == BigInt(1));
 	mu_assert(BigInt(60273125) << 26 == BigInt(4044860948480000));
 	mu_assert(BigInt(2083998385) >> 6 == BigInt(32562474));
-	mu_assert(BigInt(-2083998385) >> 6 == BigInt(-32562474));
+	mu_assert(BigInt(-2083998385) >> 6 == BigInt(-32562475));
 	mu_assert(BigInt(358194480) << 2 == BigInt(1432777920));
 	mu_assert(BigInt(-358194480) << 2 == BigInt(-1432777920));
 
@@ -1006,5 +1006,7 @@ int main()
 	mu_run(test_BigInt::_string_constructor);
 	mu_run(test_BigInt::_significant_bits);
 	mu_run(test_BigInt::_large_operations);
+
+	return 0;
 }}}
 
