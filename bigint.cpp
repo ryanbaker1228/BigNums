@@ -605,6 +605,11 @@ BigInt BigInt::bitshift_left(int shift) const
 
 BigInt BigInt::bitshift_right(int shift) const
 {{{  
+	if (this->is_less_than(0))
+	{
+		return ~((~*this).bitshift_right(shift));
+	}
+
 	BigInt shifted;
 	int i = 0;
 
@@ -828,11 +833,13 @@ bool BigInt::is_absolute_less_or_equal_to(const BigInt& other) const
 void BigInt::disect() const
 {{{
 	std::cout << (sign ? '-' : '+');
+	std::cout << "(";
 	for (int i = digits.size()-1; i > 0; --i)
 	{
 		std::cout << digits[i] << "*2**" << (30 * i) << " + ";
 	}
-	std::cout << digits[0] << '\n';
+	std::cout << digits[0];
+	std::cout << ")" << '\n';
 }}}
 
 

@@ -60,6 +60,42 @@ def _bigint_bitshift_test() -> str:
 	return test + "}}}\n\n"
 
 
+def _bigint_bitwise_test() -> str:
+	test: str = "// BITWISE\n{{{\n" 
+	num_tests: int = 100
+
+	for i in range(num_tests):
+		left: int = random.randrange(-2**4096, 2**4096)
+		mask: int = random.randrange(-2**4096, 2**4096)
+		_and: int = left & mask
+		_or:  int = left | mask
+		_xor: int = left ^ mask
+		_not: int = ~left
+
+		test += "mu_assert((BigInt(\"" + str(left) + "\") & BigInt(\"" + str(mask) + "\")) == BigInt(\"" + str(_and) + "\"));\n"
+		test += "mu_assert((BigInt(\"" + str(left) + "\") | BigInt(\"" + str(mask) + "\")) == BigInt(\"" + str(_or) + "\"));\n"
+		test += "mu_assert((BigInt(\"" + str(left) + "\") ^ BigInt(\"" + str(mask) + "\")) == BigInt(\"" + str(_xor) + "\"));\n"
+		test += "mu_assert(~(BigInt(\"" + str(left) + "\")) == BigInt(\"" + str(_not) + "\"));\n"
+
+	return test + "}}}\n\n"
+
+
+def _bigint_division_test() -> str:
+	test: str = "// DIVISION\n{{{\n"
+	num_tests: int = 25
+
+	for i in range(num_tests):
+		left:  int = random.randrange(0, 2**4096)
+		right: int = random.randrange(1, 2**4000)
+		
+		test += "mu_assert((BigInt(\"" + str(left) + "\") / BigInt(\"" + str(right) + "\") * BigInt(\"" + str(right) + "\")).is_less_or_equal_to(BigInt(\"" + str(left) + "\")));\n" +  "mu_assert((BigInt(\"" + str(left) + "\") / BigInt(\"" + str(right) + "\") * BigInt(\"" +  str(right + 1) + "\")).is_greater_than(BigInt(\"" + str(left) + "\")));\n"
+
+
+	return test + "}}}\n\n"
+
+
+
+
 def write_bigint_tests() -> None:
 	write_location  = "test_bignums.cpp"
 	safe_copy 		= "copy_of_test_bignums.cpp"
@@ -96,6 +132,8 @@ def write_bigint_tests() -> None:
 			file.write(_bigint_subtraction_test())
 			file.write(_bigint_multiplication_test())
 			file.write(_bigint_bitshift_test())
+			file.write(_bigint_bitwise_test())
+			file.write(_bigint_division_test())
 
 			file.writelines(lines[end_idx:])
 
