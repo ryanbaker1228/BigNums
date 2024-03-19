@@ -88,7 +88,7 @@ def _bigint_division_test() -> str:
 		left:  int = random.randrange(0, 2**4096)
 		right: int = random.randrange(1, 2**4000)
 		
-		test += "mu_assert((BigInt(\"" + str(left) + "\") / BigInt(\"" + str(right) + "\") * BigInt(\"" + str(right) + "\")).is_less_or_equal_to(BigInt(\"" + str(left) + "\")));\n" +  "mu_assert((BigInt(\"" + str(left) + "\") / BigInt(\"" + str(right) + "\") * BigInt(\"" +  str(right + 1) + "\")).is_greater_than(BigInt(\"" + str(left) + "\")));\n"
+		test += "mu_assert((BigInt(\"" + str(left) + "\") / BigInt(\"" + str(right) + "\") * BigInt(\"" + str(right) + "\")).is_less_or_equal_to(BigInt(\"" + str(left) + "\")));\n" +  "mu_assert(((BigInt(\"" + str(left) + "\") / BigInt(\"" + str(right) + "\") + 1) * BigInt(\"" +  str(right) + "\")).is_greater_than(BigInt(\"" + str(left) + "\")));\n"
 
 
 	return test + "}}}\n\n"

@@ -23,6 +23,7 @@ private:
 
 	BigInt recursive_bitshift_divide(const BigInt& divisor) const;
 	BigInt knuth_divide_and_remainder(const BigInt& divisor, BigInt* quotient) const;
+	BigInt magnitude_divide(const BigInt divisor, BigInt* quotient, bool need_remainder);
 
 public:
 	BigInt();

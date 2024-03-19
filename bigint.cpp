@@ -63,6 +63,32 @@ BigInt::BigInt(const std::string& s, int radix)
 		throw new std::invalid_argument("Error, zero digit length string passed to BigInt constructor.");
 	}
 
+	if (s[cursor] == '0')
+	{
+		++cursor;
+		switch (s[cursor])
+		{
+			case 'x':
+				radix = 16;
+				++cursor;
+				break;
+
+			case 'o':
+				radix = 8;
+				++cursor;
+				break;
+
+			case 'b':
+				radix = 2;
+				++cursor;
+				break;
+
+			default:
+				break;
+		}
+	}
+
+
 	while (cursor < s.length() && s[cursor] == '0')
 	{
 		++cursor;
@@ -314,7 +340,7 @@ BigInt BigInt::divide(const BigInt& divisor) const
 
 
 BigInt BigInt::recursive_bitshift_divide(const BigInt& divisor) const
-{{{   
+{{{
 	if (this->is_absolute_less_than(divisor))
 	{
 		return 0;
@@ -382,6 +408,12 @@ BigInt BigInt::knuth_divide_and_remainder(const BigInt& divisor, BigInt* quotien
 		}
 	}
 
+	return 0;
+}}}
+
+
+BigInt magnitude_divide(const BigInt divisor, BigInt* quotient, bool need_remainder)
+{{{
 	return 0;
 }}}
 
