@@ -3,7 +3,7 @@ STD = -std=c++20
 CFLAGS = -Wall -Werror -Wno-unused -pedantic -O3
 
 TEST = test_bignums
-TEST_SRC = test_bignums.cpp bigint.cpp
+TEST_SRC = test_bignums.cpp 
 
 BENCHMARK = benchmark_bignums
 BENCHMARK_SRC = benchmark_bignums.cpp bigint.cpp
