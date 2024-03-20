@@ -23,6 +23,7 @@ namespace test_BigInt
 	int _string_constructor();
 	int _significant_bits();
 	int _large_operations();
+	int _chop();
 } 
 	
 
@@ -727,6 +728,25 @@ mu_assert(((BigInt("419918826833744411438358977600425187737453411854027287554469
 }}}
 
 
+int test_BigInt::_chop()
+{{{
+	mu_configure();
+
+	mu_assert(BigInt(0).get_lower(1) == BigInt(0));
+	mu_assert(BigInt(0).get_upper(1) == BigInt(0));
+	mu_assert(BigInt(0).get_lower(1) == BigInt(0));
+	mu_assert(BigInt(0).get_upper(1) == BigInt(0));
+	mu_assert(BigInt(1).get_lower(1) == BigInt(1));
+	mu_assert(BigInt(1).get_upper(1) == BigInt(0));
+	mu_assert(BigInt(1ull << 31).get_upper(1) == BigInt(1));
+	mu_assert(BigInt(1ull << 31).get_lower(1) == BigInt(0));
+	mu_assert(BigInt(264ull << 31).get_upper(1) == BigInt(264));
+	mu_assert(BigInt(264ull << 31).get_lower(1) == BigInt(0));
+
+	mu_return();
+}}}
+
+
 int main()
 {{{ 
 	mu_run(test_BigInt::_negation);
@@ -743,6 +763,7 @@ int main()
 	mu_run(test_BigInt::_string_constructor);
 	mu_run(test_BigInt::_significant_bits);
 	mu_run(test_BigInt::_large_operations);
+	mu_run(test_BigInt::_chop);
 
 	return 0;
 }}}

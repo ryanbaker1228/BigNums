@@ -141,24 +141,14 @@ BigInt::BigInt(const std::string& s, int radix)
 }}}
 
 
-//BigInt& BigInt::operator=(std::string s)
-//{{{
-//}}}
-
-
-//BigInt& BigInt::operator=(const char* s)
-//{{{
-//}}}
-
-
-//BigInt& BigInt::operator=(int n)
-//{{{
-//}}}
+BigInt::BigInt(const std::vector<uint32_t>& d)
+{{{
+	this->sign = false;
+	this->digits = d;
+}}}
 
 
 // Addition
-
-
 void BigInt::add_in_place(const int addend)
 {{{
 	uint64_t carry = 0;
@@ -229,6 +219,11 @@ void BigInt::add_in_place(const int addend)
 
 BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 {{{ 
+	if (this->digits.size() < factor.digits.size())
+	{
+		return factor.grade_school_multiply(*this);
+	}
+
 	BigInt product(0);
 	product.digits.reserve(this->digits.size() + factor.digits.size() + 1);
 
@@ -244,7 +239,7 @@ BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 			uint64_t current_prod = uint64_t(this->digits[j])
 								  * uint64_t(factor.digits[i]) 
 								  + carry;
-			current_sum.digits.push_back(current_prod % BigInt::base);
+			current_sum.digits.push_back(current_prod & BigInt::base_mask);
 			carry = current_prod / BigInt::base;
 		}
 
@@ -259,11 +254,21 @@ BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 
 BigInt BigInt::karatsuba_multiply(const BigInt& factor) const
 {{{
-	const int half = (1 + std::max(this->digits.size(), factor.digits.size())) / 2;
+	const int half = (1 + std::max(this->digits.size(), factor.digits.size())) >> 1;
 
-	BigInt product(0);	
-	
-	return product;
+	BigInt a_lo = this->get_lower(half);
+	BigInt a_hi = this->get_upper(half);
+
+	BigInt b_lo = factor.get_lower(half);
+	BigInt b_hi = factor.get_upper(half);
+
+	BigInt product_hi = a_hi.multiply(b_hi);
+	BigInt product_md = a_hi.plus(a_lo).multiply(b_hi.plus(b_lo));
+	BigInt product_lo = a_lo.multiply(b_lo);
+
+	return product_hi.bitshift_left(BigInt::log2_base * half)
+		  .plus(product_md.minus(product_hi).minus(product_lo)).bitshift_left(BigInt::log2_base * half)
+		  .plus(product_lo);
 }}}
 
 
@@ -345,8 +350,42 @@ BigInt BigInt::knuth_divide_and_remainder(const BigInt& divisor, BigInt* quotien
 {{{
 	quotient->digits.clear();
 
-	
+	if (this->is_absolute_less_than(divisor))
+	{
+		*quotient = 0;
+		return *this;
+	}
 
+	if (this->is_absolute_equal_to(divisor))
+	{
+		*quotient = 1;
+		return 0;
+	}
+
+	if (divisor.digits.size() == 1)
+	{
+		
+	}
+/*
+	if (this->digits.size() >= BigInt::KNUTH_POWER_OF_2_THRESHOLD)
+	{
+		int tz_count = std::min(this->least_significant_bit(), divisor.least_significant_bit());	
+
+		if (tz_count >= KNUTH_TRAILING_ZERO_THRESHOLD * 32)
+		{
+			BigInt a(*this);
+			BigInt b(divisor);
+
+			a = a.bithsift_right(tz_count);
+			b = b.bitshift_right(tz_count);
+
+			BigInt r = a.knuth_divide_and_remainder(b, quotient);
+			r = r.bitshift_left(tz_count);
+
+			return r;
+		}
+	}
+*/
 	return 0;
 }}}
 
@@ -636,6 +675,34 @@ int BigInt::most_significant_bit() const
 	}
 
 	return BigInt::log2_base * (this->digits.size() - 1) + msb;
+}}}
+
+
+BigInt BigInt::get_lower(int chop) const
+{{{ 
+	if (chop >= this->digits.size())
+	{
+		return this->abs();
+	}
+
+	BigInt lower;
+	lower.digits = { this->digits.begin(), this->digits.begin() + chop };
+
+	return lower;
+}}}
+
+
+BigInt BigInt::get_upper(int chop) const
+{{{
+	if (chop >= this->digits.size())
+	{
+		return 0;
+	}
+
+	BigInt upper;
+	upper.digits = { this->digits.begin() + chop, this->digits.end() };
+
+	return upper;
 }}}
 
 

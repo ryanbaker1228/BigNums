@@ -3,8 +3,11 @@
 
 #include <deque>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <utility> // std::pair, std:make_pair
+#include <random>
+#include <cassert>
 
 
 
@@ -14,8 +17,8 @@ private:
 	std::vector<uint32_t> digits;
 	bool sign; // 0 = positive; 1 = negative
 
-	static constexpr uint32_t base = 1ull << 31;
-	static constexpr uint32_t base_mask = BigInt::base - 1;
+	static constexpr uint32_t base = 1 << 31;
+	static constexpr uint32_t base_mask = INT_MAX;
 	static constexpr uint32_t log2_base = 31;
 
 	BigInt grade_school_multiply(const BigInt& factor) const;
@@ -29,6 +32,7 @@ public:
 	BigInt();
 	BigInt(int64_t n);
 	BigInt(const std::string& s, int radix = 10);
+	BigInt(const std::vector<uint32_t>& d);
 	
 	//BigInt& operator=(std::string s);
 	//BigInt& operator=(const char* s);
@@ -124,10 +128,23 @@ public:
 	{{{  
 		BigInt product;
 
-		product = this->grade_school_multiply(factor);
+		if (this->is_equal_to(0) || factor.is_equal_to(0))
+		{
+			return 0;
+		}
+
+		if (std::min(this->digits.size(), factor.digits.size()) < BigInt::KARATSUBA_THRESHOLD)
+		{
+			product = this->grade_school_multiply(factor);
+		}
+		else
+		{
+			product = this->karatsuba_multiply(factor);	
+		}
 
 		return (this->sign == factor.sign) ? product : -product;
 	}}}
+
 
 	void multiply_in_place(const int factor);
 
@@ -171,13 +188,15 @@ public:
 
 	//// Bitshift
 	BigInt bitshift_left(int shift) const;
-
 	BigInt bitshift_right(int shift) const;
 	//friend BigInt operator<<=(BigInt& bn, const int shift);
 	//friend BigInt operator>>=(BigInt& bn, const int shift);
 
 	int least_significant_bit() const;
 	int most_significant_bit() const;
+
+	BigInt get_lower(int chop) const;
+	BigInt get_upper(int chop) const;
 
 	//// Relationals
 	bool is_equal_to(const BigInt& other) const;
@@ -194,6 +213,21 @@ public:
 	bool is_absolute_less_than(const BigInt& other) const;
 	bool is_absolute_less_or_equal_to(const BigInt& other) const;
 
+
+	static BigInt random(int num_digits)
+	{{{
+		BigInt r;
+
+		r.digits.reserve(num_digits);
+
+		for (int i = 0; i < num_digits; ++i)
+		{
+			r.digits.push_back(rand() & BigInt::base_mask);
+		}
+
+		return r;
+	}}}
+
 	//// I/O
 	//std::string to_string() const;
 	//friend std::ostream& operator<<(std::ostream& out, const BigInt& bn);
@@ -202,6 +236,78 @@ public:
 	void trim_lz();
 
 	BigInt abs() const;
+
+	// Each multiplication algorithm has a different time complexity and constant multiplier,
+	// meaning that each will be faster for a certain range of input sizes. The purpose of this
+	// function is to figure out which algorithm is faster at each input range. These results 
+	// are used to define the thresholds in the .multiply() function.
+	static void _benchmark_multiplication_algorithms()
+	{{{
+		using std::chrono::steady_clock;
+		using std::chrono::microseconds;
+		using std::chrono::duration_cast;
+
+		const int test_lengths[] = 
+		{
+			4,    5,    6,    7,
+			8,    10,   12,   14,
+			16,   20,   24,   28, 
+			32,   40,   48,   56, 
+			64,   80,   96,   112, 
+			128,  160,  192,  224, 
+			256,  320,  384,  448, 
+			512,  640,  768,  896,
+			1024, 1280, 1536, 1792,
+		};
+
+		const std::string gs_color = "\x1b[33m"; // gold
+		const std::string ks_color = "\x1b[36m"; // cyan
+
+		std::cout << std::string(8, ' ');
+		for (int i = 2; i < 11; ++i)
+		{
+			std::cout << "|  " << std::setw(2) << i << "  |";
+		}
+		std::cout << std::endl;
+
+		auto global_start = steady_clock::now();
+		for (int a_len : test_lengths)
+		{
+			std::cout << std::setw(6) << a_len << ": ";
+			for (int b_len : test_lengths)
+			{
+				BigInt a = BigInt::random(a_len);
+				BigInt b = BigInt::random(b_len);
+
+				auto gs_start = steady_clock::now();
+				BigInt gs_product = b.grade_school_multiply(a);
+				auto gs_end = steady_clock::now();
+				double gs_duration = duration_cast<microseconds>(gs_end - gs_start).count();
+
+				auto ks_start = steady_clock::now();
+				BigInt ks_product = a.karatsuba_multiply(b);
+				auto ks_end = steady_clock::now();
+				double ks_duration = duration_cast<microseconds>(ks_end - ks_start).count();
+
+				assert(gs_product.is_equal_to(ks_product));
+
+				const double fastest = std::min({ gs_duration, ks_duration });
+
+				const std::string color = gs_duration == fastest ? gs_color
+										: ks_duration == fastest ? ks_color
+										: "\x1b[0m";
+
+				std::cout << color << "██" << "\x1b[0m";
+			}
+
+			std::cout << std::endl;
+		}
+		auto global_end = steady_clock::now();
+		double global_duration = duration_cast<microseconds>(global_end - global_start).count();
+
+		std::cout << global_duration / 1e6 << std::endl;
+	}}}
+
 
 private:
 	// number of bits required to represent each digit in a given radix(index) times 1024
@@ -257,6 +363,8 @@ private:
         0x17179149, 0x1cb91000, 0x23744899, 0x2b73a840, 0x34e63b41,
         0x40000000, 0x4cfa3cc1, 0x5c13d840, 0x6d91b519, 0x39aa400
     };
+
+	private: static constexpr int KARATSUBA_THRESHOLD = 56;
 };
 
 
