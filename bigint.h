@@ -14,9 +14,9 @@ private:
 	std::vector<uint32_t> digits;
 	bool sign; // 0 = positive; 1 = negative
 
-	static constexpr uint32_t base = 1 << 30;
+	static constexpr uint32_t base = 1ull << 31;
 	static constexpr uint32_t base_mask = BigInt::base - 1;
-	static constexpr uint32_t log2_base = 30;
+	static constexpr uint32_t log2_base = 31;
 
 	BigInt grade_school_multiply(const BigInt& factor) const;
 	BigInt karatsuba_multiply(const BigInt& factor) const;
@@ -48,26 +48,26 @@ public:
 
 		BigInt sum;
 		sum.digits.reserve(std::max(this->digits.size(), addend.digits.size()));
-		int carry = 0;
+		uint32_t carry = 0;
 		int i = 0;
 
 		for (; i < std::min(this->digits.size(), addend.digits.size()); ++i)
 		{
-			int digit_sum = this->digits[i] + addend.digits[i] + carry;
+			uint32_t digit_sum = this->digits[i] + addend.digits[i] + carry;
 			sum.digits.push_back(digit_sum & BigInt::base_mask);
 			carry = digit_sum >> BigInt::log2_base;
 		}
 
 		for (; i < this->digits.size(); ++i)
 		{
-			int digit_sum = this->digits[i] + carry;
+			uint32_t digit_sum = uint32_t(this->digits[i]) + carry;
 			sum.digits.push_back(digit_sum & BigInt::base_mask);
 			carry = digit_sum >> BigInt::log2_base;
 		}
 
 		for (; i < addend.digits.size(); ++i)
 		{
-			int digit_sum = addend.digits[i] + carry;
+			uint32_t digit_sum = uint32_t(addend.digits[i]) + carry;
 			sum.digits.push_back(digit_sum & BigInt::base_mask);
 			carry = digit_sum >> BigInt::log2_base;
 		}
@@ -171,6 +171,7 @@ public:
 
 	//// Bitshift
 	BigInt bitshift_left(int shift) const;
+
 	BigInt bitshift_right(int shift) const;
 	//friend BigInt operator<<=(BigInt& bn, const int shift);
 	//friend BigInt operator>>=(BigInt& bn, const int shift);
@@ -218,36 +219,44 @@ private:
 	};
 
 	// number of digits that are guaranteed to fit into a BigInt digit
-	// CHARACTERS_PER_BIGINT_DIGIT[i] = floor(logbase i of 2^30)
-	// also the largest power of index such that index^exponent <= 2^30
-	// 2^30 <= 2^30
-	// 17^7 <= 2^30
-	// 36^5 <= 2^30
+	// CHARACTERS_PER_BIGINT_DIGIT[i] = floor(logbase i of 2^31)
+	// also the largest power of index such that index^exponent <= 2^31
+	// 2^30 <= 2^31
+	// 17^7 <= 2^31
+	// 36^5 <= 2^31
 	static constexpr int CHARACTERS_PER_BIGINT_DIGIT[37] = 
 	{
 		0, 0, 				// base 0 and 1 are trivial
-		30, 18, 15, 12, 11, // base 2  -> 6
-		10, 10, 9,  9,  8,  // base 7  -> 11
-		8,  8,  7,  7,  7,  // base 12 -> 16
-		7,  7,  7,  6,  6,  // base 17 -> 21
+		30, 19, 15, 13, 11, // base 2  -> 6
+		11, 10, 9,  9,  8,  // base 7  -> 11
+		8,  8,  8,  7,  7,  // base 12 -> 16
+		7,  7,  7,  7,  7,  // base 17 -> 21
 		6,  6,  6,  6,  6,  // base 22 -> 26
 		6,  6,  6,  6,  6,  // base 27 -> 31
-		6,  5,  5,  5,  5,  // base 32 -> 36
+		6,  6,  6,  6,  5,  // base 32 -> 36
 	};
 
 	// maximum group value that can be bitten off for each radix
 	// MAX_GROUP_SIZE[i] = i^CHARACTERS_PER_BIGINT_DIGIT[i]
-	static constexpr int MAX_GROUP_SIZE[37] = 
-	{
-		0, 0,                                                      // base 0 and 1 are trivial
-		1073741824, 387420489,  1073741824, 244140625,  362797056, // base 2  -> 6
-		282475249,  1073741824, 387420489,  1000000000, 214358881, // base 7  -> 11
-		429981696,  815730721,  105413504,  170859375,  268435456, // base 12 -> 16
-		410338673,  612220032,  893871739,  64000000,   85766121,  // base 17 -> 21
-		113379904,  148035889,  191102976,  244140625,  308915776, // base 22 -> 26
-		387420489,  481890304,  594823321,  729000000,  887503681, // base 27 -> 31
-		1073741824, 39135393,   45435424,   52521875,   60466176,  // base 32 -> 36
-	};
+	static constexpr uint32_t MAX_GROUP_SIZE[37] = 
+	/*{
+		0, 0,                                                       // base 0 and 1 are trivial
+		2147483648, 1162261467, 1073741824, 1220703125, 362797056,  // base 2  -> 6
+		1977326743, 1073741824, 387420489,  1000000000, 214358881,  // base 7  -> 11
+		429981696,  815730721,  1475789056, 170859375,  268435456,  // base 12 -> 16
+		410338673,  612220032,  893871739,  1280000000, 1801088541, // base 17 -> 21
+		113379904,  148035889,  191102976,  244140625,  308915776,  // base 22 -> 26
+		387420489,  481890304,  594823321,  729000000,  887503681,  // base 27 -> 31
+		1073741824, 1291467969, 1544804416, 1838265625, 60466176,   // base 32 -> 32
+	};*/{0, 0,
+        0x40000000, 0x4546b3db, 0x40000000, 0x48c27395, 0x159fd800,
+        0x75db9c97, 0x40000000, 0x17179149, 0x3b9aca00, 0xcc6db61,
+        0x19a10000, 0x309f1021, 0x57f6c100, 0xa2f1b6f,  0x10000000,
+        0x18754571, 0x247dbc80, 0x3547667b, 0x4c4b4000, 0x6b5a6e1d,
+        0x6c20a40,  0x8d2d931,  0xb640000,  0xe8d4a51,  0x1269ae40,
+        0x17179149, 0x1cb91000, 0x23744899, 0x2b73a840, 0x34e63b41,
+        0x40000000, 0x4cfa3cc1, 0x5c13d840, 0x6d91b519, 0x39aa400
+    };
 };
 
 

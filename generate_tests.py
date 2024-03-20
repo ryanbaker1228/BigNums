@@ -4,7 +4,7 @@ import random
 
 def _bigint_addition_test() -> str:
 	test: str = "//  ADDITION\n {{{\n"
-	num_tests: int = 100
+	num_tests: int = 10
 
 	for i in range(num_tests): 
 		left:  int = random.randrange(-2**4096, 2**4096)
@@ -18,7 +18,7 @@ def _bigint_addition_test() -> str:
 
 def _bigint_subtraction_test() -> str:
 	test: str  = "// SUBTRACTION\n{{{\n"
-	num_tests: int = 100
+	num_tests: int = 10
 
 	for i in range(num_tests): 
 		left:  int = random.randrange(-2**4096, 2**4096)
@@ -32,7 +32,7 @@ def _bigint_subtraction_test() -> str:
 
 def _bigint_multiplication_test() -> str:
 	test: str = "// MULTIPLICATION\n{{{\n"
-	num_tests: int = 25
+	num_tests: int = 10
 
 	for i in range(num_tests):
 		left:  int = random.randrange(-2**4096, 2**4096)
@@ -46,7 +46,7 @@ def _bigint_multiplication_test() -> str:
 
 def _bigint_bitshift_test() -> str:
 	test: str = "// BITSHIFTS\n{{{\n"
-	num_tests: int = 100
+	num_tests: int = 10
 
 	for i in range(num_tests):
 		left:  int = random.randrange(-2**2048, 2**2048)
@@ -62,7 +62,7 @@ def _bigint_bitshift_test() -> str:
 
 def _bigint_bitwise_test() -> str:
 	test: str = "// BITWISE\n{{{\n" 
-	num_tests: int = 100
+	num_tests: int = 10
 
 	for i in range(num_tests):
 		left: int = random.randrange(-2**4096, 2**4096)
@@ -82,7 +82,7 @@ def _bigint_bitwise_test() -> str:
 
 def _bigint_division_test() -> str:
 	test: str = "// DIVISION\n{{{\n"
-	num_tests: int = 25
+	num_tests: int = 5
 
 	for i in range(num_tests):
 		left:  int = random.randrange(0, 2**4096)

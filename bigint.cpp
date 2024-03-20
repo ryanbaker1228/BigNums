@@ -161,11 +161,11 @@ BigInt::BigInt(const std::string& s, int radix)
 
 void BigInt::add_in_place(const int addend)
 {{{
-	int carry = 0;
+	uint64_t carry = 0;
 
 	for (int i = 0; i < this->digits.size(); ++i)
 	{
-		int sum = this->digits[i] + carry + addend * (i == 0);
+		uint64_t sum = this->digits[i] + carry + addend * (i == 0);
 		this->digits[i] = sum & BigInt::base_mask;
 		carry = sum >> BigInt::log2_base;
 	}
@@ -230,7 +230,7 @@ void BigInt::add_in_place(const int addend)
 BigInt BigInt::grade_school_multiply(const BigInt& factor) const
 {{{ 
 	BigInt product(0);
-	product.digits.reserve(this->digits.size() + factor.digits.size());
+	product.digits.reserve(this->digits.size() + factor.digits.size() + 1);
 
 	for (int i = 0; i < factor.digits.size(); ++i)
 	{
@@ -261,20 +261,8 @@ BigInt BigInt::karatsuba_multiply(const BigInt& factor) const
 {{{
 	const int half = (1 + std::max(this->digits.size(), factor.digits.size())) / 2;
 
-	BigInt a_hi, a_lo, b_hi, b_lo;
-	a_hi.digits = std::vector<uint32_t>(this->digits.begin() + half, this->digits.end());
-	a_lo.digits = std::vector<uint32_t>(this->digits.begin(), this->digits.begin() + half);
-	b_hi.digits = std::vector<uint32_t>(factor.digits.begin() + half, factor.digits.end());
-	b_lo.digits = std::vector<uint32_t>(factor.digits.begin(), factor.digits.begin() + half);
-
-	BigInt prod_lo = a_lo.multiply(b_lo);
-	BigInt prod_hi = a_hi.multiply(b_hi);
-	BigInt prod_md = (a_hi.plus(a_lo)).multiply(b_hi.plus(b_lo));
-
-	BigInt product = (prod_hi << (2 * BigInt::base * half))
-				   + (prod_md - prod_hi - prod_lo) + (BigInt::base * half)
-				   + prod_lo;
-
+	BigInt product(0);	
+	
 	return product;
 }}}
 
@@ -285,7 +273,7 @@ void BigInt::multiply_in_place(const int factor)
 
 	for (int i = 0; i < this->digits.size(); ++i)
 	{
-		uint64_t product = uint64_t(this->digits[i] & BigInt::base_mask) * factor + carry;
+		uint64_t product = uint64_t(this->digits[i]) * factor + carry;
 		this->digits[i] = product & BigInt::base_mask;
 		carry = product >> BigInt::log2_base;
 	}
@@ -324,21 +312,6 @@ BigInt BigInt::divide(const BigInt& divisor) const
 }}}
 
 
-//BigInt operator/(const BigInt& dividend, const int divisor)
-//{{{
-//}}}
-
-
-//BigInt operator/=(BigInt& dividend, const BigInt& divisor)
-//{{{
-//}}}
-
-
-//BigInt operator/=(BigInt& dividend, const int divisor)
-//{{{
-//}}}
-
-
 BigInt BigInt::recursive_bitshift_divide(const BigInt& divisor) const
 {{{
 	if (this->is_absolute_less_than(divisor))
@@ -351,62 +324,28 @@ BigInt BigInt::recursive_bitshift_divide(const BigInt& divisor) const
 	}
 	
 	BigInt quotient(1);
-	BigInt accumulator(divisor);
-	BigInt trim(*this);
-	trim.trim_lz();
-	trim.sign = false;
-	accumulator.sign = false;
+	BigInt accumulator(divisor.abs());
 
-	int shift = trim.most_significant_bit() - divisor.most_significant_bit();
+	int shift = this->most_significant_bit() - divisor.most_significant_bit();
 
-	quotient = quotient << shift;
-	accumulator = accumulator << shift;
+	quotient = quotient.bitshift_left(shift);
+	accumulator = accumulator.bitshift_left(shift);
 
-	if (accumulator.is_absolute_greater_than(trim))
+	if (this->is_absolute_less_than(accumulator))
 	{
 		accumulator = accumulator >> 1;
 		quotient = quotient >> 1;
 	}
-	
-	return quotient + (trim-accumulator).recursive_bitshift_divide(divisor);
+
+	return quotient + (this->abs().minus(accumulator)).recursive_bitshift_divide(divisor);
 }}}
 
 
 BigInt BigInt::knuth_divide_and_remainder(const BigInt& divisor, BigInt* quotient) const
 {{{
-	if (this->is_equal_to(0))
-	{
-		*quotient = 0;
-		return 0;
-	}
-	if (this->is_absolute_less_than(divisor))
-	{
-		*quotient = 0;
-		return *this;
-	}
-	if (this->is_absolute_equal_to(divisor))
-	{
-		*quotient = 1;
-		return 0;
-	}
-
 	quotient->digits.clear();
 
-	if (this->digits.size() > 0)
-	{
-		int tz_count = std::min(this->least_significant_bit(), divisor.least_significant_bit());
-
-		if (tz_count >= BigInt::base * 0)
-		{
-			BigInt a(*this);
-			BigInt b(divisor);
-			a = a.bitshift_right(tz_count);
-			b = b.bitshift_right(tz_count);
-			BigInt remainder = a.knuth_divide_and_remainder(b, quotient);
-			remainder.bitshift_left(tz_count);
-			return remainder;
-		}
-	}
+	
 
 	return 0;
 }}}
@@ -418,47 +357,8 @@ BigInt magnitude_divide(const BigInt divisor, BigInt* quotient, bool need_remain
 }}}
 
 
-/*
-BigInt BigInt::knuth_divide(const BigInt& divisor) const
-{{{
-	if (this->digits.size() >= 6)
-	{
-		int tz_count = std::min(this->least_significant_bit, divisor.least_significant_bit) + 1;
-
-		if (tz_count > 300)
-		{
-			BigInt a(*this);
-
-			a.bitshift_right(tz_count);
-			divisor.bitshift_right(tz_count);
-
-			BigInt
-}}}
-
-
-BigInt BigInt::knuth_divide(const BigInt& other) const
-{{{ 
-	
-}}}*/
-
-
 //// Modulus
 //BigInt operator%(const BigInt& dividend, const BigInt& modulus)
-//{{{
-//}}}
-
-
-//BigInt operator%(const BigInt& dividend, const int modulus)
-//{{{
-//}}}
-
-
-//BigInt operator%=(BigInt& dividend, const BigInt& modulus)
-//{{{
-//}}}
-
-
-//BigInt operator%=(BigInt& dividend, const int modulus)
 //{{{
 //}}}
 
@@ -541,7 +441,7 @@ BigInt BigInt::bitwise_and(const BigInt& mask) const
 
 	for (int i = 0; i < std::min(bn.digits.size(), mask.digits.size()); ++i)
 	{
-		result.digits.push_back(mask.digits[i] & bn.digits[i] & BigInt::base_mask);
+		result.digits.push_back(mask.digits[i] & bn.digits[i]);
 	}
 
 	result.trim_lz();
@@ -636,10 +536,14 @@ BigInt BigInt::bitshift_left(int shift) const
 
 
 BigInt BigInt::bitshift_right(int shift) const
-{{{  
+{{{   
 	if (this->is_less_than(0))
 	{
 		return ~((~*this).bitshift_right(shift));
+	}
+	if (shift == 0)
+	{
+		return *this;
 	}
 
 	BigInt shifted;
@@ -654,7 +558,7 @@ BigInt BigInt::bitshift_right(int shift) const
 		return 0;
 	}
 
-	const int borrow_mask = (1 << shift) - 1;
+	const int borrow_mask = (1ull << shift) - 1;
 
 	for (; i < this->digits.size() - 1; ++i)
 	{
@@ -677,7 +581,7 @@ BigInt BigInt::bitshift_right(int shift) const
 
 	shifted.sign = false;
 
-	return this->sign ? ~shifted : shifted;
+	return shifted;
 }}}
 
 
@@ -725,7 +629,7 @@ int BigInt::most_significant_bit() const
 	int msb = BigInt::log2_base;
 	uint32_t digit = this->digits.back();
 
-	while (digit != 0 && !(digit & 0x20000000))
+	while (digit != 0 && !(digit & 0x40000000))
 	{
 		--msb;
 		digit <<= 1;
@@ -868,7 +772,7 @@ void BigInt::disect() const
 	std::cout << "(";
 	for (int i = digits.size()-1; i > 0; --i)
 	{
-		std::cout << digits[i] << "*2**" << (30 * i) << " + ";
+		std::cout << digits[i] << "*2**" << (31 * i) << " + ";
 	}
 	std::cout << digits[0];
 	std::cout << ")" << '\n';
