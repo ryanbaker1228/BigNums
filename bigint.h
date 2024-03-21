@@ -191,14 +191,14 @@ public: BigInt add(const BigInt& addend) const
 
 	for (; i < this->digits.size(); ++i)
 	{
-		uint32_t digit_sum = uint32_t(this->digits[i]) + carry;
+		uint32_t digit_sum = this->digits[i] + carry;
 		sum.digits.push_back(digit_sum & BigInt::BASE_MASK);
 		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
 
 	for (; i < addend.digits.size(); ++i)
 	{
-		uint32_t digit_sum = uint32_t(addend.digits[i]) + carry;
+		uint32_t digit_sum = addend.digits[i] + carry;
 		sum.digits.push_back(digit_sum & BigInt::BASE_MASK);
 		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
@@ -209,15 +209,31 @@ public: BigInt add(const BigInt& addend) const
 }}}
 
 
-public: void add_in_place(const int addend)
+public: void add_in_place(const BigInt& addend)
 {{{
-	uint64_t carry = 0;
+	this->digits.reserve(std::max(this->digits.size(), addend.digits.size()));
+	uint32_t carry = 0;
+	int i = 0;
 
-	for (int i = 0; i < this->digits.size(); ++i)
+	for (; i < std::min(this->digits.size(), addend.digits.size()); ++i)
 	{
-		uint64_t sum = this->digits[i] + carry + addend * (i == 0);
-		this->digits[i] = sum & BigInt::BASE_MASK;
-		carry = sum >> BigInt::LOG2_BASE;
+		uint32_t digit_sum = this->digits[i] + addend.digits[i] + carry;
+		this->digits[i] = digit_sum & BigInt::BASE_MASK;
+		carry = digit_sum >> BigInt::LOG2_BASE;
+	}
+
+	for (; i < this->digits.size(); ++i)
+	{
+		uint32_t digit_sum = this->digits[i] + carry;
+		this->digits[i] = digit_sum & BigInt::BASE_MASK;
+		carry = digit_sum >> BigInt::LOG2_BASE;
+	}
+
+	for (; i < addend.digits.size(); ++i)
+	{
+		uint32_t digit_sum = addend.digits[i] + carry;
+		this->digits.push_back(digit_sum & BigInt::BASE_MASK);
+		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
 
 	if (carry)
@@ -290,11 +306,6 @@ public: BigInt multiply(const BigInt& factor) const
 
 private: BigInt grade_school_multiply(const BigInt& factor) const
 {{{ 
-	if (this->digits.size() < factor.digits.size())
-	{
-		return factor.grade_school_multiply(*this);
-	}
-
 	BigInt product(0);
 	product.digits.reserve(this->digits.size() + factor.digits.size() + 1);
 
@@ -302,21 +313,27 @@ private: BigInt grade_school_multiply(const BigInt& factor) const
 	{
 		int64_t carry = 0;
 		BigInt  current_sum;
+		current_sum.digits.reserve(i + this->digits.size());
 
-		for (int j = 0; j < i; ++j) { current_sum.digits.push_back(0); }
+		for (int j = 0; j < i; ++j) 
+		{ 
+			current_sum.digits.push_back(0); 
+		}
 
 		for (int j = 0; j < this->digits.size(); ++j)
 		{
 			uint64_t current_prod = uint64_t(this->digits[j])
-								  * uint64_t(factor.digits[i]) 
+								  * factor.digits[i] 
 								  + carry;
 			current_sum.digits.push_back(current_prod & BigInt::BASE_MASK);
 			carry = current_prod / BigInt::BASE;
 		}
 
-		if (carry > 0) { current_sum.digits.push_back(carry); }
+		if (carry) { 
+			current_sum.digits.push_back(carry); 
+		}
 
-		product = product.add(current_sum);
+		product.add_in_place(current_sum);
 	}
 
 	return product;
@@ -362,7 +379,7 @@ public: void multiply_in_place(const int factor)
 
 
 public: BigInt divide(const BigInt& divisor) const
-{{{   
+{{{    
 	if (divisor.is_equal_to(0))
 	{
 		throw std::runtime_error("Error, attempted BigInt division by 0.");
@@ -380,82 +397,47 @@ public: BigInt divide(const BigInt& divisor) const
 	}
 	else
 	{
-		quotient = this->recursive_bitshift_divide(divisor);
+		quotient = this->abs().unsigned_bitshift_divide(divisor.abs());
 	}
 	
 	return (this->sign == divisor.sign) ? quotient : -quotient;
 }}}
 
 
-private: BigInt recursive_bitshift_divide(const BigInt& divisor) const
-{{{
-	if (this->is_absolute_less_than(divisor))
+private: BigInt unsigned_bitshift_divide(const BigInt& divisor) const
+{{{ 
+	if (this->is_less_than(divisor))
 	{
 		return 0;
 	}
-	if (this->is_absolute_equal_to(divisor))
+	if (this->is_equal_to(divisor))
 	{
 		return 1;
 	}
-	
+
 	BigInt quotient(1);
-	BigInt accumulator(divisor.abs());
+	BigInt accumulator(divisor);
 
 	int shift = this->most_significant_bit() - divisor.most_significant_bit();
 
-	quotient = quotient.bitshift_left(shift);
-	accumulator = accumulator.bitshift_left(shift);
+	accumulator.bitshift_left_in_place(shift);
 
 	if (this->is_absolute_less_than(accumulator))
 	{
 		accumulator = accumulator.bitshift_right(1);
-		quotient = quotient.bitshift_right(1);
+		--shift;
 	}
 
-	return quotient.add((this->abs().subtract(accumulator)).recursive_bitshift_divide(divisor));
+	quotient.bitshift_left_in_place(shift);
+
+	return quotient.add((this->subtract(accumulator)).unsigned_bitshift_divide(divisor.abs()));
 }}}
 
 
-private: BigInt knuth_divide_and_remainder(const BigInt& divisor, BigInt* quotient) const
+private: BigInt knuth_divide_and_remainder(const BigInt& divisor, BigInt* const quotient) const
 {{{
-	quotient->digits.clear();
-
-	if (this->is_absolute_less_than(divisor))
-	{
-		*quotient = 0;
-		return *this;
-	}
-
-	if (this->is_absolute_equal_to(divisor))
-	{
-		*quotient = 1;
-		return 0;
-	}
-
-	if (divisor.digits.size() == 1)
-	{
-		
-	}
-/*
-	if (this->digits.size() >= BigInt::KNUTH_POWER_OF_2_THRESHOLD)
-	{
-		int tz_count = std::min(this->least_significant_bit(), divisor.least_significant_bit());	
-
-		if (tz_count >= KNUTH_TRAILING_ZERO_THRESHOLD * 32)
-		{
-			BigInt a(*this);
-			BigInt b(divisor);
-
-			a = a.bithsift_right(tz_count);
-			b = b.bitshift_right(tz_count);
-
-			BigInt r = a.knuth_divide_and_remainder(b, quotient);
-			r = r.bitshift_left(tz_count);
-
-			return r;
-		}
-	}
-*/
+	 
+	
 	return 0;
 }}}
 
@@ -593,7 +575,7 @@ public: BigInt bitwise_not() const
 
 
 public: BigInt bitshift_left(int shift) const
-{{{ 
+{{{  
 	if (this->is_equal_to(0)) 
 	{
 		return 0;
@@ -614,9 +596,45 @@ public: BigInt bitshift_left(int shift) const
 		carry = int(this->digits[i]) >> (BigInt::LOG2_BASE - shift);
 	}
 
-	if (carry) { shifted.digits.push_back(carry); }
+	if (carry) 
+	{ 
+		shifted.digits.push_back(carry); 
+	}
 
 	return this->sign ? -shifted : shifted;
+}}}
+
+
+public: void bitshift_left_in_place(int shift)
+{{{
+	if (this->is_equal_to(0))
+	{
+		return;
+	}
+
+	this->digits.reserve(this->digits.size() + shift / BigInt::LOG2_BASE + 1);
+	
+	while (shift >= BigInt::LOG2_BASE)
+	{
+		shift -= BigInt::LOG2_BASE;
+		this->digits.insert(this->digits.begin(), 0);
+	}
+	
+	uint64_t carry = this->digits.back() >> (BigInt::LOG2_BASE - shift);
+
+	for (int i = this->digits.size() - 1; i > 0; --i)
+	{
+		this->digits[i] <<= shift;
+		this->digits[i] |= this->digits[i - 1] >> (BigInt::LOG2_BASE - shift);
+		this->digits[i] &= BigInt::BASE_MASK;
+	}
+
+	if (carry) 
+	{
+		this->digits.push_back(carry);
+	}
+	this->digits[0] <<= shift;
+	this->digits[0] &= BigInt::BASE_MASK;
 }}}
 
 
@@ -859,6 +877,21 @@ private: void trim_leading_zeroes()
 	{
 		this->digits.pop_back();
 	}
+}}}
+
+
+public: void print_digits()
+{{{
+	std::cout << (this->sign ? '-' : '+');
+	std::cout << '(';
+	std::cout << this->digits.front();
+
+	for (int i = 1; i < this->digits.size(); ++i)
+	{
+		std::cout << " + " << this->digits[i] << "*2**" << BigInt::LOG2_BASE * i;
+	}
+
+	std::cout << ')' << std::endl;
 }}}
 
 

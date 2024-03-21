@@ -6,7 +6,7 @@ TEST = test_bignums
 TEST_SRC = test_bignums.cpp 
 
 BENCHMARK = benchmark_bignums
-BENCHMARK_SRC = benchmark_bignums.cpp bigint.cpp
+BENCHMARK_SRC = benchmark_bignums.cpp 
 
 
 test: $(TEST_SRC)
