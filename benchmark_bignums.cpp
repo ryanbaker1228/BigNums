@@ -28,7 +28,7 @@ namespace benchmark_BigInt
 
 void benchmark_BigInt::_addition()
 {{{
-	const int num_adds = 10000;
+	const int num_adds = 100000;
 
 	srand(time(NULL));
 
@@ -63,8 +63,8 @@ void benchmark_BigInt::_addition()
 
 
 void benchmark_BigInt::_subtraction()
-{{{
-	const int num_subs = 10000;
+{{{ 
+	const int num_subs = 100000;
 
 	srand(time(NULL));
 
@@ -99,8 +99,8 @@ void benchmark_BigInt::_subtraction()
 
 
 void benchmark_BigInt::_multiplication()
-{{{ 
-	const int num_muls = 10000;
+{{{  
+	const int num_muls = 100000;
 
 	srand(time(NULL));
 
@@ -135,8 +135,8 @@ void benchmark_BigInt::_multiplication()
 
 
 void benchmark_BigInt::_division()
-{{{ 
-	const int num_divs = 1000;
+{{{  
+	const int num_divs = 100000;
 
 	srand(time(NULL));
 
@@ -171,8 +171,8 @@ void benchmark_BigInt::_division()
 
 
 void benchmark_BigInt::_relationals()
-{{{
-	const int num_comparisons = 10000;
+{{{ 
+	const int num_comparisons = 100000;
 
 	srand(time(NULL));
 
@@ -217,8 +217,8 @@ void benchmark_BigInt::_relationals()
 
 
 void benchmark_BigInt::_bitshifts()
-{{{
-	const int num_shifts = 10000;
+{{{ 
+	const int num_shifts = 100000;
 
 	srand(time(NULL));
 
@@ -256,7 +256,7 @@ void benchmark_BigInt::_bitshifts()
 
 void benchmark_BigInt::_bitwise_and()
 {{{ 
-	const int num_ands = 10000;
+	const int num_ands = 100000;
 
 	srand(time(NULL));
 
@@ -292,7 +292,7 @@ void benchmark_BigInt::_bitwise_and()
 
 void benchmark_BigInt::_bitwise_xor()
 {{{ 
-	const int num_xors = 10000;
+	const int num_xors = 100000;
 
 	srand(time(NULL));
 
@@ -328,7 +328,7 @@ void benchmark_BigInt::_bitwise_xor()
 
 void benchmark_BigInt::_bitwise_or()
 {{{ 
-	const int num_ors = 10000;
+	const int num_ors = 100000;
 
 	srand(time(NULL));
 

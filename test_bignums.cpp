@@ -4,6 +4,7 @@
 
 #include "miniunit.h"
 #include "bigint.h"
+#include "bigfloat.h"
 
 
 
@@ -25,6 +26,13 @@ namespace test_BigInt
 	int _large_operations();
 	int _chop();
 } 
+
+
+namespace test_BigFloat
+{
+	int _negation();
+	//_relationals();
+}
 	
 
 int test_BigInt::_negation()
@@ -763,8 +771,35 @@ int test_BigInt::_chop()
 }}}
 
 
+int test_BigFloat::_negation()
+{{{ 
+	mu_configure();
+
+	mu_assert(BigFloat(0)  == -BigFloat(0));
+	mu_assert(BigFloat(-1) == -BigFloat(1));
+	mu_assert(BigFloat(1)  == -BigFloat(-1));
+	mu_assert(BigFloat(-999999999999999ull) == -BigFloat(999999999999999ull));
+	mu_assert(BigFloat(999999999999999ull) == -BigFloat(-999999999999999ull));
+	mu_assert(BigFloat(-0) == BigFloat(0));
+
+	srand(time(NULL));
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		int n = rand() - INT_MAX / 2;
+
+		mu_set_error_message(std::to_string(n));
+		mu_assert(BigFloat(-n) == -BigFloat(n));
+		mu_assert(-BigFloat(-n) == BigFloat(n));
+	}
+
+	mu_return();
+}}}
+
+
 int main()
 {{{ 
+	//BigInt::_benchmark_multiplication_algorithms();
 	mu_run(test_BigInt::_negation);
 	mu_run(test_BigInt::_relationals);	
 	mu_run(test_BigInt::_addition);
@@ -780,6 +815,8 @@ int main()
 	mu_run(test_BigInt::_significant_bits);
 	mu_run(test_BigInt::_large_operations);
 	mu_run(test_BigInt::_chop);
+	std::cout << std::endl;
+	mu_run(test_BigFloat::_negation);
 
 	return 0;
 }}}

@@ -12,13 +12,15 @@
 
 class BigInt
 {
+friend class BigFloat;
+
 private: std::vector<uint32_t> digits;
 private: bool sign = false;
 
 
 // CONSTRUCTORS
 public: BigInt()
-{{{
+{{{ 
 	digits.clear();
 	sign = false;
 }}}
@@ -166,25 +168,25 @@ public: BigInt(const std::vector<uint32_t>& d, bool is_negative = false)
 // ASSIGNMENT
 
 
-public: BigInt add(const BigInt& addend) const
+public: BigInt add(const BigInt& augend) const
 {{{  
-	if (addend.sign)
+	if (augend.sign)
 	{
-		return this->subtract(-addend);
+		return this->subtract(-augend);
 	}
 	if (this->sign)
 	{
-		return -((-(*this)).subtract(addend));
+		return -((-(*this)).subtract(augend));
 	}
 
 	BigInt sum;
-	sum.digits.reserve(std::max(this->digits.size(), addend.digits.size()));
+	sum.digits.reserve(std::max(this->digits.size(), augend.digits.size()));
 	uint32_t carry = 0;
 	int i = 0;
 
-	for (; i < std::min(this->digits.size(), addend.digits.size()); ++i)
+	for (; i < std::min(this->digits.size(), augend.digits.size()); ++i)
 	{
-		uint32_t digit_sum = this->digits[i] + addend.digits[i] + carry;
+		uint32_t digit_sum = this->digits[i] + augend.digits[i] + carry;
 		sum.digits.push_back(digit_sum & BigInt::BASE_MASK);
 		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
@@ -196,9 +198,9 @@ public: BigInt add(const BigInt& addend) const
 		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
 
-	for (; i < addend.digits.size(); ++i)
+	for (; i < augend.digits.size(); ++i)
 	{
-		uint32_t digit_sum = addend.digits[i] + carry;
+		uint32_t digit_sum = augend.digits[i] + carry;
 		sum.digits.push_back(digit_sum & BigInt::BASE_MASK);
 		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
@@ -209,15 +211,15 @@ public: BigInt add(const BigInt& addend) const
 }}}
 
 
-public: void add_in_place(const BigInt& addend)
+public: void add_in_place(const BigInt& augend)
 {{{
-	this->digits.reserve(std::max(this->digits.size(), addend.digits.size()));
+	this->digits.reserve(std::max(this->digits.size(), augend.digits.size()));
 	uint32_t carry = 0;
 	int i = 0;
 
-	for (; i < std::min(this->digits.size(), addend.digits.size()); ++i)
+	for (; i < std::min(this->digits.size(), augend.digits.size()); ++i)
 	{
-		uint32_t digit_sum = this->digits[i] + addend.digits[i] + carry;
+		uint32_t digit_sum = this->digits[i] + augend.digits[i] + carry;
 		this->digits[i] = digit_sum & BigInt::BASE_MASK;
 		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
@@ -229,9 +231,9 @@ public: void add_in_place(const BigInt& addend)
 		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
 
-	for (; i < addend.digits.size(); ++i)
+	for (; i < augend.digits.size(); ++i)
 	{
-		uint32_t digit_sum = addend.digits[i] + carry;
+		uint32_t digit_sum = augend.digits[i] + carry;
 		this->digits.push_back(digit_sum & BigInt::BASE_MASK);
 		carry = digit_sum >> BigInt::LOG2_BASE;
 	}
@@ -306,6 +308,11 @@ public: BigInt multiply(const BigInt& factor) const
 
 private: BigInt grade_school_multiply(const BigInt& factor) const
 {{{ 
+	if (this->digits.size() < factor.digits.size())
+	{
+		return factor.grade_school_multiply(*this);
+	}
+
 	BigInt product(0);
 	product.digits.reserve(this->digits.size() + factor.digits.size() + 1);
 
@@ -436,26 +443,32 @@ private: BigInt unsigned_bitshift_divide(const BigInt& divisor) const
 
 private: BigInt knuth_divide_and_remainder(const BigInt& divisor, BigInt* const quotient) const
 {{{
-	 
 	
+
 	return 0;
 }}}
 
 
-public: BigInt operator-() const
+public: BigInt negate() const
 {{{
-	BigInt bn(*this);
+	BigInt n(*this);
 
-	bn.sign = ((bn.sign == false) && (this->not_equal_to(0)));
-	return bn;
+	n.sign = n.sign == false && this->not_equal_to(0);
+	return n;
 }}}
 
 
 public: BigInt abs() const
-{{{
+{{{ 
 	BigInt a(*this);
 	a.sign = false;
 	return a;
+}}}
+
+
+public: BigInt operator-() const
+{{{ 
+	return this->negate();
 }}}
 
 
@@ -570,7 +583,7 @@ public: BigInt bitwise_xor(const BigInt& mask) const
 
 public: BigInt bitwise_not() const
 {{{ 
-	return -(this->add(1));
+	return (this->add(1)).negate();
 }}}
 
 
@@ -601,7 +614,7 @@ public: BigInt bitshift_left(int shift) const
 		shifted.digits.push_back(carry); 
 	}
 
-	return this->sign ? -shifted : shifted;
+	return this->sign ? shifted.negate() : shifted;
 }}}
 
 
@@ -767,8 +780,8 @@ public: bool is_equal_to(const BigInt& other) const
 		return false; 
 	}
 
-	int i;
-	for (i = 0; (i < digits.size()) && (digits[i] == other.digits[i]); ++i);
+	int i = 0;
+	for (; (i < digits.size()) && (digits[i] == other.digits[i]); ++i);
 
 	return (i == digits.size());
 }}}
@@ -933,7 +946,62 @@ public: static void _benchmark_multiplication_algorithms()
 		1024, 1280, 1536, 1792,
 	};
 
-	const std::string gs_color = "\x1b[33m"; // gold
+	std::cout << std::endl;
+	std::cout << " ----- BENCHMARK MULTIPLICATION -----\n";
+	std::cout << " |   # of |      grade |            |\n";
+	std::cout << " | digits |     school |  karatsuba |\n";
+	std::cout << " |--------|----(µs)----|----(µs)----|\n";
+
+	for (int len : test_lengths)
+	{
+		std::cout << " | " <<std::setw(6) << len << " | ";
+
+		BigInt a = BigInt::random(len);
+		BigInt b = BigInt::random(len);
+		BigInt c = BigInt::random(len);
+		BigInt d = BigInt::random(len);
+
+		auto gs_start = steady_clock::now();
+		BigInt gs_product1 = a.grade_school_multiply(b);
+		BigInt gs_product2 = a.grade_school_multiply(c);
+		BigInt gs_product3 = a.grade_school_multiply(d);
+		BigInt gs_product4 = b.grade_school_multiply(c);
+		BigInt gs_product5 = b.grade_school_multiply(d);
+		BigInt gs_product6 = c.grade_school_multiply(d);
+		auto gs_end = steady_clock::now();
+		double gs_duration = duration_cast<microseconds>(gs_end - gs_start).count();
+
+		auto ks_start = steady_clock::now();
+		BigInt ks_product1 = a.karatsuba_multiply(b);
+		BigInt ks_product2 = a.karatsuba_multiply(c);
+		BigInt ks_product3 = a.karatsuba_multiply(d);
+		BigInt ks_product4 = b.karatsuba_multiply(c);
+		BigInt ks_product5 = b.karatsuba_multiply(d);
+		BigInt ks_product6 = c.karatsuba_multiply(d);
+		auto ks_end = steady_clock::now();
+		double ks_duration = duration_cast<microseconds>(ks_end - ks_start).count();
+
+		assert(
+			(gs_product1.is_equal_to(ks_product1)) &&
+			(gs_product2.is_equal_to(ks_product2)) &&
+			(gs_product3.is_equal_to(ks_product3)) &&
+			(gs_product4.is_equal_to(ks_product4)) &&
+			(gs_product5.is_equal_to(ks_product5)) &&
+			(gs_product6.is_equal_to(ks_product6))
+		);
+
+		double fastest = std::min({ gs_duration, ks_duration });
+
+		const std::string gs_color = gs_duration == fastest ? "\x1b[32m" : "\x1b[0m";
+		const std::string ks_color = ks_duration == fastest ? "\x1b[32m" : "\x1b[0m";
+
+		std::cout << gs_color << std::setw(10) << gs_duration << "\x1b[0m" << " | "
+				  << ks_color << std::setw(10) << ks_duration << "\x1b[0m" << " | " << std::endl;
+	}
+
+	std::cout << " |--------|----(µs)----|----(µs)----|\n\n";
+/*{{{
+	const std::string gs_color = "\x1b[31m"; // red
 	const std::string ks_color = "\x1b[36m"; // cyan
 
 	std::cout << std::string(8, ' ');
@@ -979,6 +1047,7 @@ public: static void _benchmark_multiplication_algorithms()
 	double global_duration = duration_cast<microseconds>(global_end - global_start).count();
 
 	std::cout << global_duration / 1e6 << std::endl;
+}}}*/
 }}}
 
 
@@ -1039,7 +1108,7 @@ private: static constexpr uint32_t MAX_GROUP_SIZE[37] =
 };
 
 // BigInt length where it is faster to use karatsuba_multiply than grade_school_multiply
-private: static constexpr int KARATSUBA_THRESHOLD = 56;
+private: static constexpr int KARATSUBA_THRESHOLD = 24;
 };
 
 
