@@ -816,6 +816,7 @@ int test_BigFloat::_relationals()
 	mu_assert(  BigFloat(-5) <  BigFloat(5));
 	mu_assert(  BigFloat(5)  >= BigFloat(-5));
 	mu_assert(  BigFloat(5)  >  BigFloat(-5));
+	mu_assert(BigFloat(742412734) < BigFloat(850822865));
 
 	srand(time(NULL));
 

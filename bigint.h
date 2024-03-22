@@ -883,6 +883,25 @@ public: bool is_absolute_less_or_equal_to(const BigInt& other) const
 }}}
 
 
+public: bool fractionally_less_than(const BigInt& other) const
+{{{
+	int i = 0;
+	const int min_length = std::min(this->digits.size(), other.digits.size());
+	
+	for (; i < min_length && this->digits.back() - i == other.digits.back() - i; ++i) {}
+
+	// iterator made it to the front of the vector, whichever one has more digits is greater, else equal
+	if (i == min_length)
+	{
+		return this->digits.size() < other.digits.size();
+	}
+	else // iterator is somewhere in the middle, whichever has a greater digit at iterator is greater
+	{
+		return this->digits.back() - i < other.digits.back() - i;
+	}
+}}}
+
+
 // Microsoft says to use "zeros" as the plural of "zero". I don't like microsoft.
 private: void trim_leading_zeroes()
 {{{
