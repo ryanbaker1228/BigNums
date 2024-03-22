@@ -31,7 +31,7 @@ namespace test_BigInt
 namespace test_BigFloat
 {
 	int _negation();
-	//_relationals();
+	int _relationals();
 }
 	
 
@@ -797,6 +797,83 @@ int test_BigFloat::_negation()
 }}}
 
 
+int test_BigFloat::_relationals()
+{{{
+	mu_configure();
+
+	mu_assert(  BigFloat(0)  == BigFloat(0));
+	mu_assert(!(BigFloat(0)  <  BigFloat(0)));
+	mu_assert(!(BigFloat(0)  >  BigFloat(0)));
+	mu_assert(  BigFloat(0)  <= BigFloat(0));
+	mu_assert(  BigFloat(0)  >= BigFloat(0));
+	mu_assert(  BigFloat(1)  >  BigFloat(0));
+	mu_assert(  BigFloat(-1) <  BigFloat(0));
+	mu_assert(!(BigFloat(0)  >= BigFloat(1)));
+	mu_assert(!(BigFloat(0)  != BigFloat(0)));
+	mu_assert(!(BigFloat(5)  != BigFloat(5)));
+	mu_assert(  BigFloat(5)  == BigFloat(5));
+	mu_assert(  BigFloat(-5) <= BigFloat(5));
+	mu_assert(  BigFloat(-5) <  BigFloat(5));
+	mu_assert(  BigFloat(5)  >= BigFloat(-5));
+	mu_assert(  BigFloat(5)  >  BigFloat(-5));
+
+	srand(time(NULL));
+
+	for (int i = -10, j = 10; i <= 10; ++i, --j)
+	{
+		BigFloat I(i);
+		BigFloat J(j);
+
+		mu_set_error_message(std::to_string(i) + ", " + std::to_string(j));
+		mu_assert((i == j) == (I == J));
+		mu_assert((i != j) == (I != J));
+		mu_assert((i <  j) == (I <  J));
+		mu_assert((i >  j) == (I >  J));
+		mu_assert((i <= j) == (I <= J));
+		mu_assert((i >= j) == (I >= J));
+		mu_assert((I <  J) != (I >= J)); 
+		mu_assert((I <= J) != (I >  J)); 
+		mu_assert((I == J) != (I != J));
+
+		// I understand these tests are redundant but I am paranoid
+		if (I < J) { mu_assert((I <= J) && (I != J) && !(I >= J) && (J > I)); }
+		if (I > J) { mu_assert((I >= J) && (I != J) && !(I <= J) && (J < I)); }
+	}
+
+	for (int i = 1; i <= 1000; ++i)
+	{
+		int a = rand() - INT_MAX / 2;
+		int b = rand() - INT_MAX / 2;
+
+		BigFloat A(a);
+		BigFloat B(b);
+
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert((a == b) == (A == B));
+		mu_assert((a != b) == (A != B));
+		mu_assert((a <  b) == (A <  B));
+		mu_assert((a >  b) == (A >  B));
+		mu_assert((a <= b) == (A <= B));
+		mu_assert((a >= b) == (A >= B));
+
+		mu_assert((A < B) != (A > B));
+		mu_assert((A == B) != (A != B));
+
+		mu_assert((A.is_absolute_equal_to(B)) == (std::abs(a) == std::abs(b)));
+		mu_assert((A.is_absolute_not_equal_to(B)) == (std::abs(a) != std::abs(b)));
+		mu_assert((A.is_absolute_less_than(B)) == (std::abs(a) < std::abs(b)));
+		mu_assert((A.is_absolute_greater_than(B)) == (std::abs(a) > std::abs(b)));
+		mu_assert((A.is_absolute_less_or_equal_to(B)) == (std::abs(a) <= std::abs(b)));
+		mu_assert((A.is_absolute_greater_or_equal_to(B)) == (std::abs(a) >= std::abs(b)));
+
+		if (A < B) { mu_assert((A <= B) && (A != B) && !(A >= B) && (B > A)); }
+		if (A > B) { mu_assert((A >= B) && (A != B) && !(A <= B) && (B < A)); }
+	}
+
+	mu_return();
+}}}
+
+
 int main()
 {{{ 
 	//BigInt::_benchmark_multiplication_algorithms();
@@ -817,6 +894,7 @@ int main()
 	mu_run(test_BigInt::_chop);
 	std::cout << std::endl;
 	mu_run(test_BigFloat::_negation);
+	mu_run(test_BigFloat::_relationals);
 
 	return 0;
 }}}
