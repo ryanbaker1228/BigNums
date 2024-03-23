@@ -32,6 +32,8 @@ namespace test_BigFloat
 {
 	int _negation();
 	int _relationals();
+	int _float_constructor();
+	int _addition();
 }
 	
 
@@ -42,8 +44,8 @@ int test_BigInt::_negation()
 	mu_assert(BigInt(0)  == -BigInt(0));
 	mu_assert(BigInt(-1) == -BigInt(1));
 	mu_assert(BigInt(1)  == -BigInt(-1));
-	mu_assert(BigInt(-999999999999999ull) == -BigInt(999999999999999ull));
-	mu_assert(BigInt(999999999999999ull) == -BigInt(-999999999999999ull));
+	mu_assert(BigInt(-999999999999999ll) == -BigInt(999999999999999ll));
+	mu_assert(BigInt(999999999999999ll) == -BigInt(-999999999999999ll));
 	mu_assert(BigInt(-0) == BigInt(0));
 
 	srand(time(NULL));
@@ -778,8 +780,8 @@ int test_BigFloat::_negation()
 	mu_assert(BigFloat(0)  == -BigFloat(0));
 	mu_assert(BigFloat(-1) == -BigFloat(1));
 	mu_assert(BigFloat(1)  == -BigFloat(-1));
-	mu_assert(BigFloat(-999999999999999ull) == -BigFloat(999999999999999ull));
-	mu_assert(BigFloat(999999999999999ull) == -BigFloat(-999999999999999ull));
+	mu_assert(BigFloat(-999999999999999ll) == -BigFloat(999999999999999ll));
+	mu_assert(BigFloat(999999999999999ll) == -BigFloat(-999999999999999ll));
 	mu_assert(BigFloat(-0) == BigFloat(0));
 
 	srand(time(NULL));
@@ -798,7 +800,7 @@ int test_BigFloat::_negation()
 
 
 int test_BigFloat::_relationals()
-{{{
+{{{ 
 	mu_configure();
 
 	mu_assert(  BigFloat(0)  == BigFloat(0));
@@ -816,6 +818,13 @@ int test_BigFloat::_relationals()
 	mu_assert(  BigFloat(-5) <  BigFloat(5));
 	mu_assert(  BigFloat(5)  >= BigFloat(-5));
 	mu_assert(  BigFloat(5)  >  BigFloat(-5));
+	
+	mu_assert(BigFloat(3.0) > BigFloat(2.0));
+	mu_assert(BigFloat(3.14159) > BigFloat(3.14));
+	mu_assert(BigFloat(0.00000014) < BigFloat(0.00000015));
+	mu_assert(BigFloat(-0.000231) == -BigFloat(0.000231));
+	mu_assert(BigFloat(3.14159) > BigFloat(3.14));
+
 	mu_assert(BigFloat(742412734) < BigFloat(850822865));
 
 	srand(time(NULL));
@@ -825,6 +834,11 @@ int test_BigFloat::_relationals()
 		BigFloat I(i);
 		BigFloat J(j);
 
+		double d_i = i;
+		double d_j = j;
+		BigFloat F(d_i);
+		BigFloat G(d_j);
+
 		mu_set_error_message(std::to_string(i) + ", " + std::to_string(j));
 		mu_assert((i == j) == (I == J));
 		mu_assert((i != j) == (I != J));
@@ -832,9 +846,17 @@ int test_BigFloat::_relationals()
 		mu_assert((i >  j) == (I >  J));
 		mu_assert((i <= j) == (I <= J));
 		mu_assert((i >= j) == (I >= J));
+
 		mu_assert((I <  J) != (I >= J)); 
 		mu_assert((I <= J) != (I >  J)); 
 		mu_assert((I == J) != (I != J));
+
+		mu_assert((i == j) == (F == G));
+		mu_assert((i != j) == (F != G));
+		mu_assert((i <  j) == (F <  G));
+		mu_assert((i >  j) == (F >  G));
+		mu_assert((i <= j) == (F <= G));
+		mu_assert((i >= j) == (F >= G));
 
 		// I understand these tests are redundant but I am paranoid
 		if (I < J) { mu_assert((I <= J) && (I != J) && !(I >= J) && (J > I)); }
@@ -845,9 +867,13 @@ int test_BigFloat::_relationals()
 	{
 		int a = rand() - INT_MAX / 2;
 		int b = rand() - INT_MAX / 2;
+		double d_a = a;
+		double d_b = b;
 
 		BigFloat A(a);
 		BigFloat B(b);
+		BigFloat F(d_a);
+		BigFloat G(d_b);
 
 		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
 		mu_assert((a == b) == (A == B));
@@ -859,6 +885,13 @@ int test_BigFloat::_relationals()
 
 		mu_assert((A < B) != (A > B));
 		mu_assert((A == B) != (A != B));
+
+		mu_assert((a == b) == (F == G));
+		mu_assert((a != b) == (F != G));
+		mu_assert((a <  b) == (F <  G));
+		mu_assert((a >  b) == (F >  G));
+		mu_assert((a <= b) == (F <= G));
+		mu_assert((a >= b) == (F >= G));
 
 		mu_assert((A.is_absolute_equal_to(B)) == (std::abs(a) == std::abs(b)));
 		mu_assert((A.is_absolute_not_equal_to(B)) == (std::abs(a) != std::abs(b)));
@@ -875,8 +908,42 @@ int test_BigFloat::_relationals()
 }}}
 
 
-int main()
+int test_BigFloat::_float_constructor()
 {{{ 
+	mu_configure();
+
+	mu_assert(BigFloat(0.0) == BigFloat(0));
+	mu_assert(BigFloat(1.0) == BigFloat(1));
+	mu_assert(BigFloat(2.0) == BigFloat(2));
+	mu_assert(BigFloat(3.0) == BigFloat(3));
+	mu_assert(BigFloat(-1.0) == BigFloat(-1));
+	mu_assert(BigFloat(-2.0) == BigFloat(-2));
+	mu_assert(BigFloat(-4.0) == BigFloat(-4));
+	mu_assert(BigFloat(10.0) == BigFloat(10));
+	mu_assert(BigFloat(-10.0) == -BigFloat(10));
+	mu_assert(BigFloat(1e9) == BigFloat(1'000'000'000));
+	mu_assert(BigFloat(2.5e16) == BigFloat(25'000'000'000'000'000ull));
+	mu_assert(BigFloat(9284863865.0) == BigFloat(9284863865ll));
+
+	mu_return();
+}}}
+
+/*
+int test_BigFloat::_addition()
+{{{
+	mu_configure();
+
+	mu_assert(BigFloat(0) + BigFloat(0) == BigFloat(0));
+	mu_assert(BigFloat(1) + BigFloat(0) == BigFloat(1));
+	mu_assert(BigFloat(0) + BigFloat(1) == BigFloat(1));
+	mu_assert(BigFloat(1) + BigFloat(1) == BigFloat(2));
+
+	mu_return();
+}}}
+*/
+
+int main()
+{  
 	//BigInt::_benchmark_multiplication_algorithms();
 	mu_run(test_BigInt::_negation);
 	mu_run(test_BigInt::_relationals);	
@@ -896,7 +963,9 @@ int main()
 	std::cout << std::endl;
 	mu_run(test_BigFloat::_negation);
 	mu_run(test_BigFloat::_relationals);
+	mu_run(test_BigFloat::_float_constructor);
+	//mu_run(test_BigFloat::_addition);
 
 	return 0;
-}}}
+}
 

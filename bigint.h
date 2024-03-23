@@ -12,9 +12,8 @@
 
 class BigInt
 {
-friend class BigFloat;
-
 private: std::vector<uint32_t> digits;
+
 private: bool sign = false;
 
 
@@ -165,7 +164,13 @@ public: BigInt(const std::vector<uint32_t>& d, bool is_negative = false)
 }}}
 
 
-// ASSIGNMENT
+public: BigInt operator=(const BigInt& other)
+{{{ 
+	this->digits = other.digits;
+	this->sign = other.sign;
+
+	return *this;
+}}}
 
 
 public: BigInt add(const BigInt& augend) const
@@ -211,7 +216,7 @@ public: BigInt add(const BigInt& augend) const
 }}}
 
 
-public: void add_in_place(const BigInt& augend)
+public: BigInt& add_in_place(const BigInt& augend)
 {{{
 	this->digits.reserve(std::max(this->digits.size(), augend.digits.size()));
 	uint32_t carry = 0;
@@ -242,6 +247,8 @@ public: void add_in_place(const BigInt& augend)
 	{
 		this->digits.push_back(carry);
 	}
+
+	return *this;
 }}}
 
 
@@ -453,7 +460,7 @@ public: BigInt negate() const
 {{{
 	BigInt n(*this);
 
-	n.sign = n.sign == false && this->not_equal_to(0);
+	n.sign = !this->sign && this->not_equal_to(0);
 	return n;
 }}}
 
@@ -618,11 +625,11 @@ public: BigInt bitshift_left(int shift) const
 }}}
 
 
-public: void bitshift_left_in_place(int shift)
-{{{
+public: BigInt& bitshift_left_in_place(int shift)
+{{{ 
 	if (this->is_equal_to(0))
 	{
-		return;
+		return *this;
 	}
 
 	this->digits.reserve(this->digits.size() + shift / BigInt::LOG2_BASE + 1);
@@ -648,6 +655,8 @@ public: void bitshift_left_in_place(int shift)
 	}
 	this->digits[0] <<= shift;
 	this->digits[0] &= BigInt::BASE_MASK;
+
+	return *this;
 }}}
 
 
@@ -774,18 +783,18 @@ public: BigInt get_upper(int chop) const
 
 
 public: bool is_equal_to(const BigInt& other) const
-{{{ 
-	if ((this->sign != other.sign) || (digits.size() != other.digits.size())) 
+{{{  
+	if ((this->sign != other.sign) || (this->digits.size() != other.digits.size())) 
 	{ 
 		return false; 
 	}
 
 	int i = 0;
-	for (; (i < digits.size()) && (digits[i] == other.digits[i]); ++i);
+	for (; (i < this->digits.size()) && (this->digits[i] == other.digits[i]); ++i);
 
-	return (i == digits.size());
+	return (i == this->digits.size());
 }}}
-
+ 
 
 public: bool not_equal_to(const BigInt& other) const
 {{{ 
@@ -806,15 +815,15 @@ public: bool is_greater_or_equal_to(const BigInt& other) const
 
 
 public: bool is_less_than(const BigInt& other) const
-{{{   
+{{{    
 	if (this->sign != other.sign) 
 	{ 
 		return this->sign; 
 	}
 	if (this->digits.size() != other.digits.size()) 
 	{ 
-		// if *this has more digits than other and both are positive, other is greater -> true
-		// if *this has more digits than other and both are negative, *this is greater -> false
+		// if this has more digits than other and both are positive, other is greater -> true
+		// if this has more digits than other and both are negative, *this is greater -> false
 		return (this->digits.size() < other.digits.size()) ^ this->sign; 
 	}
 
@@ -880,25 +889,6 @@ public: bool is_absolute_less_than(const BigInt& other) const
 public: bool is_absolute_less_or_equal_to(const BigInt& other) const
 {{{ 
 	return (this->is_absolute_less_than(other) || this->is_absolute_equal_to(other));
-}}}
-
-
-public: bool fractionally_less_than(const BigInt& other) const
-{{{
-	int i = 0;
-	const int min_length = std::min(this->digits.size(), other.digits.size());
-	
-	for (; i < min_length && this->digits.back() - i == other.digits.back() - i; ++i) {}
-
-	// iterator made it to the front of the vector, whichever one has more digits is greater, else equal
-	if (i == min_length)
-	{
-		return this->digits.size() < other.digits.size();
-	}
-	else // iterator is somewhere in the middle, whichever has a greater digit at iterator is greater
-	{
-		return this->digits.back() - i < other.digits.back() - i;
-	}
 }}}
 
 

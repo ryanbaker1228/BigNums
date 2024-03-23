@@ -1,122 +1,230 @@
 #ifndef BIGFLOAT_H_INCLUDED
 #define BIGFLOAT_H_INCLUDED
 
+#include <vector>
 #include <iostream>
 
 
 
 class BigFloat
 {
-private: BigInt mantissa;
-private: BigInt exponent;
+// index zero will be the leading digit
+// subsequent digits are "decimal" places
+// mantissa[i] has a weight of (2^31)^i
+private: std::vector<uint32_t> mantissa;
+
+private: int64_t exponent;
+
+private: bool sign = false;
 
 
 // CONSTRUCTORS
-public: BigFloat()
-{{{ 
-	this->mantissa = 0;
+BigFloat()
+{{{
+	this->mantissa.clear();
 	this->exponent = 0;
+	this->sign = false;
 }}}
 
 
 public: BigFloat(int n)
-{{{
-	this->mantissa = n;
-	this->exponent = this->mantissa.digits.size() - 1;
+{{{ 
+	this->sign = n < 0;
+	this->exponent = -1;
+
+	n = std::abs(n);
+
+	do
+	{
+		this->mantissa.insert(this->mantissa.begin(), n & BigFloat::BASE_MASK);
+		n >>= 31;
+		++this->exponent;
+	} while (n);
 }}}
 
 
 public: BigFloat(int64_t n)
-{{{ 
-	this->mantissa = n;
-	this->exponent = this->mantissa.digits.size() - 1;
+{{{
+	this->sign = n < 0;
+	this->exponent = -1;
+
+	n = std::abs(n);
+
+	do
+	{
+		this->mantissa.insert(this->mantissa.begin(), n & BigFloat::BASE_MASK);
+		n >>= 31;
+		++this->exponent;
+	} while (n);
 }}}
 
 
 public: BigFloat(uint64_t n)
-{{{ 
-	this->mantissa = n;
-	this->exponent = this->mantissa.digits.size() - 1;
+{{{
+	this->sign = false;
+	this->exponent = -1;
+
+	do
+	{
+		this->mantissa.insert(this->mantissa.begin(), n & BigFloat::BASE_MASK);
+		n >>= 31;
+		++this->exponent;
+	} while (n);
+}}}
+
+
+public: BigFloat(double d)
+{{{
+	// this function made me very stupid.
+	// please enjoy.
+	
+	if (d == 0)
+	{
+		*this = 0;
+		return;
+	}
+
+	union
+	{
+		double as_double;
+		uint64_t as_int;
+	};
+
+	as_double = d;
+
+	// extract the base 2 exponent from the float bits, subtract the offset
+	const int exponent_2 = ((as_int & 0x7ff0000000000000) >> 52) - 1023;
+
+	// extract the base 2 mantissa and set the implicit bit
+	const uint64_t mantissa_2 = (as_int & 0xfffffffffffff) | (1ull << 52);
+
+	int shift = 52 - exponent_2 % BigFloat::LOG2_BASE;
+
+	// currently mantissa_2 is a 53 binary digit number storing the significand.
+	// by bitshifting right by (52 - shift) we extract the integer part of the number
+	// note, 52 is used rather than 53 to preserve the implicit bit 
+	// in the case that the exponent is 0
+	this->mantissa.push_back(mantissa_2 >> shift);
+
+	// begin to extract ever smaller parts by adding BigFloat::BASE to the shift and masking
+	shift -= BigFloat::LOG2_BASE;
+	for (; shift > 0; shift -= BigFloat::LOG2_BASE)
+	{
+		this->mantissa.push_back((mantissa_2 >> shift) & BigFloat::BASE_MASK);
+	}
+
+	// it is necessary to perform a left shift by (BigFloat::BASE - shift) to get the final bits
+	this->mantissa.push_back(mantissa_2 & (1 << ((BigFloat::LOG2_BASE) - 1)));
+
+	// at this point, the exponent is trivially calculated to be exponent_2 / BigFloat::BASE
+	this->exponent = exponent_2 / BigFloat::LOG2_BASE;
+
+	this->sign = d < 0;
 }}}
 
 
 public: BigFloat negate() const
 {{{
-	BigFloat n(*this);
-	n.mantissa.sign = n.mantissa.sign == false && n.mantissa.not_equal_to(0);
-	return n;
+	BigFloat f(*this);
+	f.sign = !this->sign && this->not_equal_to(0);
+	return f;
 }}}
 
 
 public: BigFloat abs() const
 {{{
 	BigFloat a(*this);
-	a.mantissa.sign = false;
+	a.sign = false;
 	return a;
 }}}
 
 
 public: BigFloat operator-() const
-{{{
+{{{  
 	return this->negate();
 }}}
 
 
-public: BigFloat(const BigInt& m, const BigInt& e)
-{{{
-	this->mantissa = m;
-	this->exponent = e;
-}}}
-
-
 public: bool is_equal_to(const BigFloat& other) const
-{{{
-	return this->mantissa.is_equal_to(other.mantissa) && this->exponent.is_equal_to(other.exponent);
+{{{ 
+	if (this->sign != other.sign || this->exponent != other.exponent) 
+	{ 
+		return false; 
+	}
+
+	int i = 0;
+	for (; i < std::min(this->mantissa.size(), other.mantissa.size()) && this->mantissa[i] == other.mantissa[i]; ++i) {}
+	for (; i > 0 && i < this->mantissa.size() && this->mantissa[i] == 0; ++i) {}
+	for (; i > 0 && i < other.mantissa.size() && other.mantissa[i] == 0; ++i) {}
+
+	return i == std::max(this->mantissa.size(), other.mantissa.size());
 }}}
 
 
 public: bool not_equal_to(const BigFloat& other) const
-{{{
-	return this->mantissa.not_equal_to(other.mantissa) || this->exponent.not_equal_to(other.exponent);
+{{{ 
+	return !this->is_equal_to(other);
 }}}
 
 
 public: bool is_greater_than(const BigFloat& other) const
-{{{
-	return other.is_less_than(*this);
+{{{  
+	return other.is_less_than(*this);	
 }}}
 
 
 public: bool is_greater_or_equal_to(const BigFloat& other) const
-{{{
-	return other.is_less_than(*this) || this->is_equal_to(other);
+{{{    
+	return (other.is_less_than(*this) || this->is_equal_to(other));
 }}}
 
 
 public: bool is_less_than(const BigFloat& other) const
-{{{
-	if (this->mantissa.sign != other.mantissa.sign)
-	{
-		return this->mantissa.sign;
+{{{   
+	if (this->sign != other.sign) 
+	{ 
+		return this->sign; 
 	}
-	if (this->mantissa.sign)
+	if (this->exponent != other.exponent)
 	{
-		return other.negate().is_less_than(this->negate());
+		// if this has a bigger exponent than other and both are positive, this is greater -> false
+		// if this has a bigger exponent than other and both are negative, this is smaller -> true
+		return (this->exponent < other.exponent) ^ this->sign;
+	}
+	
+	int i = 0;
+	for (; i < std::min(this->mantissa.size(), other.mantissa.size()) && this->mantissa[i] == other.mantissa[i]; ++i);
+
+	// if the iterator hasn't reached the end of either vector, we can return
+	if (i != std::min(this->mantissa.size(), other.mantissa.size()))
+	{
+		return (this->mantissa[i] < other.mantissa[i]) ^ this->sign;
 	}
 
-	return this->exponent.is_less_than(other.exponent) || 
-		(this->exponent.is_equal_to(other.exponent) && this->mantissa.fractionally_less_than(other.mantissa));
+	// if this has more digits than other, it is guaranteed to be greater than or equal to other -> false
+	if (other.mantissa.size() < this->mantissa.size())
+	{
+		return this->sign;
+	}
+
+	// other has more or equal number of digits than this, and both are equal up to this point.
+	// if every remaining digit in other is 0, then the two numbers are equal -> false
+	// if any remaining digit in other is significant, other > this -> true
+	// if other has no more digits, the two numbers are equal -> false
+	for (; i < other.mantissa.size() && other.mantissa[i] == 0; ++i) {}
+
+	return (i == other.mantissa.size() && i != this->mantissa.size()) ^ this->sign;
 }}}
 
 
 public: bool is_less_or_equal_to(const BigFloat& other) const
-{{{
-	return this->is_less_than(other) || this->is_equal_to(other);
+{{{  
+	return (this->is_less_than(other) || this->is_equal_to(other));
 }}}
 
 
 public: bool is_absolute_equal_to(const BigFloat& other) const
-{{{ 
+{{{
 	return this->abs().is_equal_to(other.abs());
 }}}
 
@@ -128,14 +236,14 @@ public: bool is_absolute_not_equal_to(const BigFloat& other) const
 
 
 public: bool is_absolute_greater_than(const BigFloat& other) const
-{{{
-	return other.is_absolute_less_than(*this);
+{{{    
+	return this->abs().is_greater_than(other.abs());
 }}}
 
 
 public: bool is_absolute_greater_or_equal_to(const BigFloat& other) const
-{{{ 
-	return other.is_absolute_less_than(*this) || this->is_absolute_equal_to(other);
+{{{       
+	return this->is_absolute_greater_than(other) || this->is_absolute_equal_to(other);
 }}}
 
 
@@ -146,19 +254,37 @@ public: bool is_absolute_less_than(const BigFloat& other) const
 
 
 public: bool is_absolute_less_or_equal_to(const BigFloat& other) const
-{{{
+{{{  
 	return this->is_absolute_less_than(other) || this->is_absolute_equal_to(other);
 }}}
 
 
-public: void print_digits()
+public: void print_digits() const
 {{{
-	this->mantissa.print_digits();
-	std::cout << " * (2**31) ** ";
-	this->exponent.print_digits();
+	std::cout << (sign ? '-' : '+');
+	std::cout << "(" << this->mantissa[0];
+	
+	for (int i = 1; i < this->mantissa.size(); ++i)
+	{
+		std::cout << " + " << this->mantissa[i] << " * 2**" << (-31 * i);
+	}
+
+	std::cout << ") * (2**31)**" << this->exponent << std::endl;
 }}}
 
+
+// number of possible values for each BigFloat digit
+// 2^31 is used over 2^32 so that two digits can be added without needing to expand to an int64_t
+private: static constexpr uint32_t BASE = 1 << 31;
+
+// largest possible digit, can be bitwise and-ed (&) with a number to ensure it fits
+private: static constexpr uint32_t BASE_MASK = BigFloat::BASE - 1;
+
+// number of bits in each BigFloat digit
+private: static constexpr uint32_t LOG2_BASE = 31;
+
 };
+
 
 static bool operator==(const BigFloat& left, const BigFloat& right) { return left.is_equal_to(right); }
 static bool operator!=(const BigFloat& left, const BigFloat& right) { return left.not_equal_to(right); }
@@ -166,6 +292,7 @@ static bool operator> (const BigFloat& left, const BigFloat& right) { return lef
 static bool operator>=(const BigFloat& left, const BigFloat& right) { return left.is_greater_or_equal_to(right); }
 static bool operator< (const BigFloat& left, const BigFloat& right) { return left.is_less_than(right); }
 static bool operator<=(const BigFloat& left, const BigFloat& right) { return left.is_less_or_equal_to(right); }
+
 
 
 #endif // BIGFLOAT_H_INCLUDED
