@@ -34,6 +34,7 @@ namespace test_BigFloat
 	int _relationals();
 	int _float_constructor();
 	int _addition();
+	int _multiplication();
 }
 	
 
@@ -819,6 +820,10 @@ int test_BigFloat::_relationals()
 	mu_assert(  BigFloat(5)  >= BigFloat(-5));
 	mu_assert(  BigFloat(5)  >  BigFloat(-5));
 	
+	mu_assert(  BigFloat(0.0)  == BigFloat(0));
+	mu_assert(  BigFloat(0)  == BigFloat(0.00));
+	mu_assert(  BigFloat(0.0)  == BigFloat(0.0000));
+	mu_assert(  BigFloat(-0.0)  == BigFloat(0.0000));
 	mu_assert(BigFloat(3.0) > BigFloat(2.0));
 	mu_assert(BigFloat(3.14159) > BigFloat(3.14));
 	mu_assert(BigFloat(0.00000014) < BigFloat(0.00000015));
@@ -928,7 +933,7 @@ int test_BigFloat::_float_constructor()
 	mu_return();
 }}}
 
-/*
+
 int test_BigFloat::_addition()
 {{{
 	mu_configure();
@@ -937,10 +942,33 @@ int test_BigFloat::_addition()
 	mu_assert(BigFloat(1) + BigFloat(0) == BigFloat(1));
 	mu_assert(BigFloat(0) + BigFloat(1) == BigFloat(1));
 	mu_assert(BigFloat(1) + BigFloat(1) == BigFloat(2));
+	mu_assert(BigFloat(-1) + BigFloat(-1) == BigFloat(-2));
+	mu_assert(BigFloat(-1) + BigFloat(1) == BigFloat(0));
+	mu_assert(BigFloat(1) + BigFloat(-1) == BigFloat(0));
+	mu_assert(BigFloat(10) + BigFloat(1) == BigFloat(11));
+	mu_assert(BigFloat(999'999'999'999'999ll) 
+	        + BigFloat(888'888'888'888'888ll) 
+		 == BigFloat(1'888'888'888'888'887ll));
 
 	mu_return();
 }}}
-*/
+
+
+int test_BigFloat::_multiplication()
+{{{
+	mu_configure();
+
+	mu_assert(BigFloat(0) * BigFloat(0) == BigFloat(0));
+	mu_assert(BigFloat(1) * BigFloat(0) == BigFloat(0));
+	mu_assert(BigFloat(1.0) * BigFloat(0) == BigFloat(0));
+	mu_assert(BigFloat(1.0) * BigFloat(1) == BigFloat(1));
+	mu_assert(BigFloat(2.0) * BigFloat(1) == BigFloat(2));
+	mu_assert(BigFloat(-2.0) * BigFloat(1) == BigFloat(-2));
+	mu_assert(BigFloat(-2.0) * BigFloat(-1) == BigFloat(2));
+
+	mu_return();
+}}}
+
 
 int main()
 {  
@@ -964,7 +992,8 @@ int main()
 	mu_run(test_BigFloat::_negation);
 	mu_run(test_BigFloat::_relationals);
 	mu_run(test_BigFloat::_float_constructor);
-	//mu_run(test_BigFloat::_addition);
+	mu_run(test_BigFloat::_addition);
+	mu_run(test_BigFloat::_multiplication);
 
 	return 0;
 }

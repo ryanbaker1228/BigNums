@@ -123,6 +123,81 @@ public: BigFloat(double d)
 }}}
 
 
+public: BigFloat add(const BigFloat& augend) const
+{{{
+	if (this->sign != augend.sign)
+	{
+		return (this->subtract(-augend));
+	}
+
+	BigFloat sum;
+	sum.mantissa.reserve(this->mantissa.size());
+	uint32_t carry = 0;
+
+	for (int i = this->mantissa.size() - 1; i >= 0; --i)
+	{
+		uint32_t digit_sum = (this->mantissa[i] + augend.mantissa[i] + carry);
+		sum.mantissa.push_back(digit_sum & BigFloat::BASE_MASK);
+		carry = digit_sum >> BigFloat::LOG2_BASE;
+	}
+
+	sum.exponent = this->exponent;
+	sum.sign = this->sign;
+
+	return sum;
+}}}
+
+
+public: BigFloat subtract(const BigFloat& subtrahend) const
+{{{
+	if (this->sign != subtrahend.sign)
+	{
+		return this->add(-subtrahend);
+	}
+
+	BigFloat diff;
+	diff.mantissa.reserve(this->mantissa.size());
+	uint32_t borrow = 0;
+
+	for (int i = this->mantissa.size(); i >= 0; --i)
+	{
+		int digit_diff = this->mantissa[i] - subtrahend.mantissa[i] - borrow;
+		diff.mantissa.push_back(digit_diff & BigFloat::BASE_MASK);
+		borrow = (digit_diff < 0);
+	}
+
+	diff.exponent = 0;
+	diff.sign = this->sign;
+
+	return diff;
+}}}
+
+
+public: BigFloat multiply(const BigFloat& factor) const
+{{{
+	// the basic idea is to multiply both significands, add the exponents,
+	// and adjust in case of a significand overflow.
+	// for example: 6.7e-2 * 7.1e+4 = (6.7 * 7.1)e(4-2) ≈ 47e+2 = 4.7e+3
+
+	return 0;	
+}}}
+
+
+private: std::vector<uint32_t> grade_school_multiply(const BigFloat& factor) const
+{{{
+	std::vector<uint32_t> product(this->mantissa.size() + factor.mantissa.size());
+	int i = std::max(this->mantissa.size(), factor.mantissa.size()) - 1;
+	uint64_t carry = 0;
+
+	for (; i >= 0; --i)
+	{
+		
+	}
+
+	return product;
+}}}
+
+
 public: BigFloat negate() const
 {{{
 	BigFloat f(*this);
@@ -259,6 +334,15 @@ public: bool is_absolute_less_or_equal_to(const BigFloat& other) const
 }}}
 
 
+public: void trim_trailing_zeros()
+{{{
+	while (this->mantissa.back() == 0 && this->mantissa.size() > 1)
+	{
+		this->mantissa.pop_back();
+	}
+}}}
+
+
 public: void print_digits() const
 {{{
 	std::cout << (sign ? '-' : '+');
@@ -285,6 +369,9 @@ private: static constexpr uint32_t LOG2_BASE = 31;
 
 };
 
+
+static BigFloat operator+(const BigFloat& left, const BigFloat& right) { return left.add(right); }
+static BigFloat operator*(const BigFloat& left, const BigFloat& right) { return left.multiply(right); }
 
 static bool operator==(const BigFloat& left, const BigFloat& right) { return left.is_equal_to(right); }
 static bool operator!=(const BigFloat& left, const BigFloat& right) { return left.not_equal_to(right); }

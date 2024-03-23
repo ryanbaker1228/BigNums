@@ -275,14 +275,14 @@ public: BigInt subtract(const BigInt& subtrahend) const
 	for (; i < subtrahend.digits.size(); ++i)
 	{
 		int digit_diff = this->digits[i] - subtrahend.digits[i] - borrow;
-		diff.digits.push_back(digit_diff % BigInt::BASE);
+		diff.digits.push_back(digit_diff & BigInt::BASE_MASK);
 		borrow = (digit_diff < 0);
 	}
 
 	for (; i < this->digits.size(); ++i)
 	{
 		int digit_diff = this->digits[i] - borrow;
-		diff.digits.push_back(digit_diff % BigInt::BASE);
+		diff.digits.push_back(digit_diff & BigInt::BASE_MASK);
 		borrow = (digit_diff < 0);
 	}
 
@@ -318,7 +318,7 @@ private: BigInt grade_school_multiply(const BigInt& factor) const
 	if (this->digits.size() < factor.digits.size())
 	{
 		return factor.grade_school_multiply(*this);
-	}
+	} 
 
 	BigInt product(0);
 	product.digits.reserve(this->digits.size() + factor.digits.size() + 1);
@@ -328,7 +328,7 @@ private: BigInt grade_school_multiply(const BigInt& factor) const
 		int64_t carry = 0;
 		BigInt  current_sum;
 		current_sum.digits.reserve(i + this->digits.size());
-
+ 
 		for (int j = 0; j < i; ++j) 
 		{ 
 			current_sum.digits.push_back(0); 
@@ -1009,7 +1009,7 @@ public: static void _benchmark_multiplication_algorithms()
 	}
 
 	std::cout << " |--------|----(µs)----|----(µs)----|\n\n";
-/*{{{
+
 	const std::string gs_color = "\x1b[31m"; // red
 	const std::string ks_color = "\x1b[36m"; // cyan
 
@@ -1056,7 +1056,6 @@ public: static void _benchmark_multiplication_algorithms()
 	double global_duration = duration_cast<microseconds>(global_end - global_start).count();
 
 	std::cout << global_duration / 1e6 << std::endl;
-}}}*/
 }}}
 
 
