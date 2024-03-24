@@ -175,15 +175,15 @@ public: BigInt operator=(const BigInt& other)
 
 public: BigInt add(const BigInt& augend) const
 {{{  
-	if (augend.sign)
-	{
-		return this->subtract(-augend);
-	}
 	if (this->sign)
 	{
-		return -((-(*this)).subtract(augend));
+		return this->abs().subtract(augend).negate();
 	}
-
+	if (augend.sign)
+	{
+		return this->subtract(augend.negate());
+	}
+	
 	BigInt sum;
 	sum.digits.reserve(std::max(this->digits.size(), augend.digits.size()));
 	uint32_t carry = 0;
@@ -211,6 +211,8 @@ public: BigInt add(const BigInt& augend) const
 	}
 
 	if (carry) { sum.digits.push_back(carry); }
+
+	sum.sign = this->sign && this->is_absolute_not_equal_to(0);
 
 	return sum;
 }}}
@@ -254,7 +256,7 @@ public: BigInt& add_in_place(const BigInt& augend)
 
 public: BigInt subtract(const BigInt& subtrahend) const
 {{{
-	if (this->is_less_than(subtrahend))
+	if (this->is_absolute_less_than(subtrahend))
 	{
 		return -(subtrahend.subtract(*this));
 	}

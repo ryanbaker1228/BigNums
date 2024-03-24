@@ -93,12 +93,12 @@ public: BigFloat(double d)
 	as_double = d;
 
 	// extract the base 2 exponent from the float bits, subtract the offset
-	const int exponent_2 = ((as_int & 0x7ff0000000000000) >> 52) - 1023;
+	const int exponent_2 = ((as_int & 0x7ff0000000000000ll) >> 52) - 1023;
 
 	// extract the base 2 mantissa and set the implicit bit
-	const uint64_t mantissa_2 = (as_int & 0xfffffffffffff) | (1ull << 52);
+	const uint64_t mantissa_2 = (as_int & 0xfffffffffffffll) | (1ull << 52);
 
-	int shift = 52 - exponent_2 % BigFloat::LOG2_BASE;
+	int shift = 52 - (exponent_2 % BigFloat::LOG2_BASE);
 
 	// currently mantissa_2 is a 53 binary digit number storing the significand.
 	// by bitshifting right by (52 - shift) we extract the integer part of the number
@@ -116,7 +116,7 @@ public: BigFloat(double d)
 	// it is necessary to perform a left shift by (BigFloat::BASE - shift) to get the final bits
 	this->mantissa.push_back(mantissa_2 & (1 << ((BigFloat::LOG2_BASE) - 1)));
 
-	// at this point, the exponent is trivially calculated to be exponent_2 / BigFloat::BASE
+	// the exponent is trivially calculated to be exponent_2 / BigFloat::LOG2_BASE
 	this->exponent = exponent_2 / BigFloat::LOG2_BASE;
 
 	this->sign = d < 0;
@@ -125,31 +125,53 @@ public: BigFloat(double d)
 
 public: BigFloat add(const BigFloat& augend) const
 {{{
-	if (this->sign != augend.sign)
+	using std::min, std::abs;
+
+	// is necessary to shift a number accoring to its exponent
+	// for example: 3.5e2 + 3.5e0 = 350 + 3.5 = 3.5e2 + 0.035e2 = 3.535e2
+	//
+	// the problem with this approach is that when adding two numbers with 
+	// very different exponents, the sum is required to be very large.
+	// for example: 1e10 + 1e-10 = 1.00000000000000000001e10
+	// for this reason, I believe it's necessary to truncate at a certain threshold.
+	if (this->sign)
 	{
-		return (this->subtract(-augend));
+		return this->abs().subtract(augend).negate();
+	}
+	if (augend.sign)
+	{
+		return this->subtract(augend.negate());
 	}
 
+	const int significand_len = this->is_less_than(augend)
+						      ? this->mantissa.size()
+						      : augend.mantissa.size();
+	const int delta_exponent = this->exponent - augend.exponent;
+	const int sum_mantissa_size = min(abs(delta_exponent) + significand_len, BigFloat::MAX_SIG_FIGS);
 	BigFloat sum;
-	sum.mantissa.reserve(this->mantissa.size());
-	uint32_t carry = 0;
+	sum.mantissa = std::vector<uint32_t>(sum_mantissa_size, 0);
+		
+	for (int i = 0; i < augend.mantissa.size() && i < BigFloat::MAX_SIG_FIGS - abs(delta_exponent); ++i)
+	{
+		sum.mantissa[i + delta_exponent] = augend.mantissa[i];
+	}
 
+	uint32_t carry = 0;
 	for (int i = this->mantissa.size() - 1; i >= 0; --i)
 	{
-		uint32_t digit_sum = (this->mantissa[i] + augend.mantissa[i] + carry);
-		sum.mantissa.push_back(digit_sum & BigFloat::BASE_MASK);
-		carry = digit_sum >> BigFloat::LOG2_BASE;
+		sum.mantissa[i] += this->mantissa[i] + carry;
+		carry = sum.mantissa[i] >> BigFloat::LOG2_BASE;
+		sum.mantissa[i] &= BigFloat::BASE_MASK;
 	}
 
 	sum.exponent = this->exponent;
-	sum.sign = this->sign;
 
 	return sum;
 }}}
 
 
 public: BigFloat subtract(const BigFloat& subtrahend) const
-{{{
+{{{ 
 	if (this->sign != subtrahend.sign)
 	{
 		return this->add(-subtrahend);
@@ -162,7 +184,7 @@ public: BigFloat subtract(const BigFloat& subtrahend) const
 	for (int i = this->mantissa.size(); i >= 0; --i)
 	{
 		int digit_diff = this->mantissa[i] - subtrahend.mantissa[i] - borrow;
-		diff.mantissa.push_back(digit_diff & BigFloat::BASE_MASK);
+		diff.mantissa.insert(diff.mantissa.begin(), digit_diff & BigFloat::BASE_MASK);
 		borrow = (digit_diff < 0);
 	}
 
@@ -267,7 +289,7 @@ public: bool is_less_than(const BigFloat& other) const
 		return (this->exponent < other.exponent) ^ this->sign;
 	}
 	
-	int i = 0;
+	int i = 0 
 	for (; i < std::min(this->mantissa.size(), other.mantissa.size()) && this->mantissa[i] == other.mantissa[i]; ++i);
 
 	// if the iterator hasn't reached the end of either vector, we can return
@@ -365,7 +387,12 @@ private: static constexpr uint32_t BASE = 1 << 31;
 private: static constexpr uint32_t BASE_MASK = BigFloat::BASE - 1;
 
 // number of bits in each BigFloat digit
-private: static constexpr uint32_t LOG2_BASE = 31;
+private: static constexpr int LOG2_BASE = 31;
+
+// maximum number of significant digits in a BigFloat
+// the resolutuon of a BigFloat is given by (2^31)^-BigFloat::MAX_SIG_FIGS
+// for example: (2^31)^-50 = 2^-1550 ≈ 10^-467
+private: static constexpr int MAX_SIG_FIGS = 50;
 
 };
 

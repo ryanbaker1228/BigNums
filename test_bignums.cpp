@@ -929,6 +929,20 @@ int test_BigFloat::_float_constructor()
 	mu_assert(BigFloat(1e9) == BigFloat(1'000'000'000));
 	mu_assert(BigFloat(2.5e16) == BigFloat(25'000'000'000'000'000ull));
 	mu_assert(BigFloat(9284863865.0) == BigFloat(9284863865ll));
+	mu_assert(BigFloat(0.0) == BigFloat(0.0));
+	mu_assert(BigFloat(0.1) > BigFloat(0.0));
+	mu_assert(BigFloat(0.2) > BigFloat(0.1));
+	mu_assert(BigFloat(0.3) > BigFloat(0.2));
+	mu_assert(BigFloat(0.4) > BigFloat(0.3));
+	mu_assert(BigFloat(0.5) > BigFloat(0.4));
+	mu_assert(BigFloat(0.6) > BigFloat(0.5));
+	mu_assert(BigFloat(0.7) > BigFloat(0.6));
+	mu_assert(BigFloat(0.8) > BigFloat(0.7));
+	mu_assert(BigFloat(0.9) > BigFloat(0.8));
+	mu_assert(BigFloat(1.0) > BigFloat(0.9));
+
+	BigFloat(0.0).print_digits();
+	std::cout << (BigFloat(0) <= BigFloat(0.1)) << std::endl;
 
 	mu_return();
 }}}
@@ -949,6 +963,26 @@ int test_BigFloat::_addition()
 	mu_assert(BigFloat(999'999'999'999'999ll) 
 	        + BigFloat(888'888'888'888'888ll) 
 		 == BigFloat(1'888'888'888'888'887ll));
+	mu_assert(BigFloat(0.1) + BigFloat(0.2) == BigFloat(0.3));
+	mu_assert(BigFloat(10) + BigFloat(1) == BigFloat(11));
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		int64_t a = rand() + (uint64_t(rand()) << 20);
+		int64_t b = rand(); 
+		int64_t s = a + b;
+
+		BigFloat A(a);
+		BigFloat B(b);
+		BigFloat S(s);
+
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert(A + B == S);
+		mu_assert(B + A == S);
+		mu_assert(A + b == S);
+		mu_assert(b + A == S);
+	}
+
 
 	mu_return();
 }}}
