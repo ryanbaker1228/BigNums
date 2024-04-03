@@ -27,8 +27,8 @@ namespace benchmark_BigInt
 
 
 void benchmark_BigInt::_addition()
-{{{
-	const int num_adds = 100000;
+{{{  
+	const int num_adds = 1000000;
 
 	srand(time(NULL));
 
@@ -64,7 +64,7 @@ void benchmark_BigInt::_addition()
 
 void benchmark_BigInt::_subtraction()
 {{{ 
-	const int num_subs = 100000;
+	const int num_subs = 1000000;
 
 	srand(time(NULL));
 
@@ -100,7 +100,7 @@ void benchmark_BigInt::_subtraction()
 
 void benchmark_BigInt::_multiplication()
 {{{  
-	const int num_muls = 100000;
+	const int num_muls = 1000000;
 
 	srand(time(NULL));
 

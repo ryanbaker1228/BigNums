@@ -75,9 +75,9 @@ public: BigFloat(uint64_t n)
 
 public: BigFloat(double d)
 {{{
-	// this function made me very stupid.
+	// this function made me feel very stupid.
 	// please enjoy.
-	
+
 	if (d == 0)
 	{
 		*this = 0;
@@ -100,6 +100,10 @@ public: BigFloat(double d)
 
 	int shift = 52 - (exponent_2 % BigFloat::LOG2_BASE);
 
+	// shift will be too large if the exponent_2 is negative because 
+	// of a quirk of modulus in C.
+	if (exponent_2 < 0) { shift -= BigFloat::LOG2_BASE; }
+
 	// currently mantissa_2 is a 53 binary digit number storing the significand.
 	// by bitshifting right by (52 - shift) we extract the integer part of the number
 	// note, 52 is used rather than 53 to preserve the implicit bit 
@@ -113,11 +117,14 @@ public: BigFloat(double d)
 		this->mantissa.push_back((mantissa_2 >> shift) & BigFloat::BASE_MASK);
 	}
 
-	// it is necessary to perform a left shift by (BigFloat::BASE - shift) to get the final bits
-	this->mantissa.push_back(mantissa_2 & (1 << ((BigFloat::LOG2_BASE) - 1)));
+	// it is necessary to perform a left shift by (BigFloat::LOG2_BASE - shift) to get the final bits
+	this->mantissa.push_back((mantissa_2 << -shift) & BigFloat::BASE_MASK);
 
 	// the exponent is trivially calculated to be exponent_2 / BigFloat::LOG2_BASE
 	this->exponent = exponent_2 / BigFloat::LOG2_BASE;
+
+	// once again if exponent_2 < 0, this->exponent will be too large
+	if (exponent_2 < 0) { --this->exponent; }
 
 	this->sign = d < 0;
 }}}
@@ -282,6 +289,14 @@ public: bool is_less_than(const BigFloat& other) const
 	{ 
 		return this->sign; 
 	}
+	if (this->is_equal_to(0))
+	{
+		return (!other.sign && !other.is_equal_to(0));
+	}
+	if (other.is_equal_to(0))
+	{
+		return !(!this->sign && !this->is_equal_to(0));
+	}
 	if (this->exponent != other.exponent)
 	{
 		// if this has a bigger exponent than other and both are positive, this is greater -> false
@@ -289,7 +304,7 @@ public: bool is_less_than(const BigFloat& other) const
 		return (this->exponent < other.exponent) ^ this->sign;
 	}
 	
-	int i = 0 
+	int i = 0;
 	for (; i < std::min(this->mantissa.size(), other.mantissa.size()) && this->mantissa[i] == other.mantissa[i]; ++i);
 
 	// if the iterator hasn't reached the end of either vector, we can return
