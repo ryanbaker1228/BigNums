@@ -49,7 +49,7 @@ int test_BigInt::_negation()
 	mu_assert(BigInt(999999999999999ll) == -BigInt(-999999999999999ll));
 	mu_assert(BigInt(-0) == BigInt(0));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -84,7 +84,7 @@ int test_BigInt::_relationals()
 	mu_assert(  BigInt(5)  >= BigInt(-5));
 	mu_assert(  BigInt(5)  >  BigInt(-5));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = -10, j = 10; i <= 10; ++i, --j)
 	{
@@ -160,7 +160,7 @@ int test_BigInt::_addition()
 	mu_assert(BigInt(-100) + BigInt(-1) == BigInt(-101));
 	mu_assert(BigInt(-100) + BigInt(1)  == BigInt(-99));
 	
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -213,7 +213,7 @@ int test_BigInt::_subtraction()
 	mu_assert(BigInt(-4) - BigInt(5)  == BigInt(-9));
 	mu_assert(BigInt(4)  - BigInt(-5) == BigInt(9));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -260,7 +260,7 @@ int test_BigInt::_multiplication()
 	mu_assert(BigInt(15) * BigInt(-5) == BigInt(-75));
 	mu_assert(BigInt(64) * BigInt(64) == BigInt(4096));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -344,7 +344,7 @@ int test_BigInt::_complement()
 	mu_assert(~BigInt(918234) == BigInt(~918234));
 	mu_assert(~BigInt(-128374) == BigInt(~-128374));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -480,7 +480,7 @@ int test_BigInt::_division()
 	mu_assert(BigInt(66080) / BigInt(312) == BigInt(211));	
 	mu_assert(BigInt(43934985009312144ull) / BigInt(76345345) == BigInt(575476933));	
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -577,7 +577,7 @@ int test_BigInt::_string_constructor()
 	mu_assert(BigInt(124768309714ull) == BigInt("1WUJ81DY", 35));
 	mu_assert(BigInt(124768309714ull) == BigInt("1LBFTVWY", 36));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -785,7 +785,7 @@ int test_BigFloat::_negation()
 	mu_assert(BigFloat(999999999999999ll) == -BigFloat(-999999999999999ll));
 	mu_assert(BigFloat(-0) == BigFloat(0));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -857,7 +857,7 @@ int test_BigFloat::_relationals()
 
 	mu_assert(BigFloat(742412734) < BigFloat(850822865));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = -10, j = 10; i <= 10; ++i, --j)
 	{
@@ -955,7 +955,7 @@ int test_BigFloat::_float_constructor()
 	mu_assert(BigFloat(2.5e16) == BigFloat(25'000'000'000'000'000ull));
 	mu_assert(BigFloat(9284863865.0) == BigFloat(9284863865ll));
 
-	srand(time(NULL));
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
@@ -1003,18 +1003,30 @@ int test_BigFloat::_addition()
 	mu_assert(BigFloat(999'999'999'999'999ll) 
 	        + BigFloat(888'888'888'888'888ll) 
 		 == BigFloat(1'888'888'888'888'887ll));
-	mu_assert(BigFloat(0.1) + BigFloat(0.2) == BigFloat(0.3));
 	mu_assert(BigFloat(10) + BigFloat(1) == BigFloat(11));
+	mu_assert(BigFloat(0.1) + BigFloat(0.1) == BigFloat(0.1 + 0.1));
+
+	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
-		int64_t a = rand() + (uint64_t(rand()) << 20);
-		int64_t b = rand(); 
-		int64_t s = a + b;
+		union
+		{
+			double as_double;
+			uint64_t as_int;
+		};
+
+		uint64_t i_a = rand() + (uint64_t(rand()) << 32);
+		uint64_t i_b = rand() + (uint64_t(rand()) << 32);
+		as_int = i_a; double a = as_double;
+		as_int = i_b; double b = as_double;
+
+		if (std::isnan(a)) { a = 1.0; }
+		if (std::isnan(b)) { b = 1.0; }
 
 		BigFloat A(a);
 		BigFloat B(b);
-		BigFloat S(s);
+		BigFloat S(a + b);
 
 		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
 		mu_assert(A + B == S);
@@ -1066,7 +1078,7 @@ int main()
 	mu_run(test_BigFloat::_negation);
 	mu_run(test_BigFloat::_relationals);
 	mu_run(test_BigFloat::_float_constructor);
-	//mu_run(test_BigFloat::_addition);
+	mu_run(test_BigFloat::_addition);
 	//mu_run(test_BigFloat::_multiplication);
 
 	return 0;

@@ -10,7 +10,7 @@ class BigFloat
 {
 // index zero will be the leading digit
 // subsequent digits are "decimal" places
-// mantissa[i] has a weight of (2^31)^i
+// mantissa[i] has a weight of (2^31)^-i
 private: std::vector<uint32_t> mantissa;
 
 private: int64_t exponent;
@@ -132,8 +132,6 @@ public: BigFloat(double d)
 
 public: BigFloat add(const BigFloat& augend) const
 {{{
-	using std::min, std::abs;
-
 	// is necessary to shift a number accoring to its exponent
 	// for example: 3.5e2 + 3.5e0 = 350 + 3.5 = 3.5e2 + 0.035e2 = 3.535e2
 	//
@@ -141,6 +139,14 @@ public: BigFloat add(const BigFloat& augend) const
 	// very different exponents, the sum is required to be very large.
 	// for example: 1e10 + 1e-10 = 1.00000000000000000001e10
 	// for this reason, I believe it's necessary to truncate at a certain threshold.
+	if (this->is_equal_to(0))
+	{
+		return augend;
+	}
+	if (augend.is_equal_to(0))
+	{
+		return *this;
+	}
 	if (this->sign)
 	{
 		return this->abs().subtract(augend).negate();
@@ -149,29 +155,44 @@ public: BigFloat add(const BigFloat& augend) const
 	{
 		return this->subtract(augend.negate());
 	}
+	if (this->exponent < augend.exponent)
+	{
+		return augend.add(*this);
+	}
+	if (this->exponent == augend.exponent && this->mantissa.size() < augend.mantissa.size())
+	{
+		return augend.add(*this);
+	}
 
-	const int significand_len = this->is_less_than(augend)
-						      ? this->mantissa.size()
-						      : augend.mantissa.size();
-	const int delta_exponent = this->exponent - augend.exponent;
-	const int sum_mantissa_size = min(abs(delta_exponent) + significand_len, BigFloat::MAX_SIG_FIGS);
+	const int significand_len = augend.mantissa.size() + this->exponent - augend.exponent;
 	BigFloat sum;
-	sum.mantissa = std::vector<uint32_t>(sum_mantissa_size, 0);
-		
-	for (int i = 0; i < augend.mantissa.size() && i < BigFloat::MAX_SIG_FIGS - abs(delta_exponent); ++i)
-	{
-		sum.mantissa[i + delta_exponent] = augend.mantissa[i];
-	}
-
-	uint32_t carry = 0;
-	for (int i = this->mantissa.size() - 1; i >= 0; --i)
-	{
-		sum.mantissa[i] += this->mantissa[i] + carry;
-		carry = sum.mantissa[i] >> BigFloat::LOG2_BASE;
-		sum.mantissa[i] &= BigFloat::BASE_MASK;
-	}
-
+	sum.mantissa = std::vector<uint32_t>(significand_len, 0);
 	sum.exponent = this->exponent;
+		
+	auto cursor_s = sum.mantissa.begin() + this->exponent - augend.exponent;
+
+	for (auto cursor_a = augend.mantissa.begin(); cursor_a < augend.mantissa.end(); ++cursor_a)
+	{
+		*cursor_s = *cursor_a;
+		++cursor_s;
+	}
+
+	cursor_s = sum.mantissa.begin() + this->mantissa.size() - 1;
+	uint32_t carry = 0;
+
+	for (auto cursor_t = this->mantissa.end() - 1; cursor_t >= this->mantissa.begin(); --cursor_t)
+	{
+		*cursor_s += *cursor_t + carry;
+		carry = *cursor_s >> BigFloat::LOG2_BASE;
+		*cursor_s &= BigFloat::BASE_MASK;
+		--cursor_s;
+	}
+
+	if (carry)
+	{
+		sum.mantissa.insert(sum.mantissa.begin(), carry);
+		++sum.exponent;
+	}
 
 	return sum;
 }}}

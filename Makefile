@@ -1,6 +1,6 @@
 CC = g++
 STD = -std=c++20
-CFLAGS = -Wall -Werror -Wno-unused -pedantic -O3
+CFLAGS = -Wall -Werror -Wno-unused -pedantic -O0
 
 TEST = test_bignums
 TEST_SRC = test_bignums.cpp 
