@@ -200,25 +200,29 @@ public: BigFloat add(const BigFloat& augend) const
 
 public: BigFloat subtract(const BigFloat& subtrahend) const
 {{{ 
-	if (this->sign != subtrahend.sign)
+	if (this->is_equal_to(0))
 	{
-		return this->add(-subtrahend);
+		return subtrahend.negate();
+	}
+	if (subtrahend.is_equal_to(0))
+	{
+		return *this;
+	}
+	if (this->sign)
+	{
+		return this->negate().add(subtrahend).negate();
+	}
+	if (subtrahend.sign)
+	{
+		return this->add(subtrahend.negate());
+	}
+	if (this->is_less_than(subtrahend))
+	{
+		return subtrahend.subtract(*this).negate();
 	}
 
-	BigFloat diff;
-	diff.mantissa.reserve(this->mantissa.size());
-	uint32_t borrow = 0;
-
-	for (int i = this->mantissa.size(); i >= 0; --i)
-	{
-		int digit_diff = this->mantissa[i] - subtrahend.mantissa[i] - borrow;
-		diff.mantissa.insert(diff.mantissa.begin(), digit_diff & BigFloat::BASE_MASK);
-		borrow = (digit_diff < 0);
-	}
-
-	diff.exponent = 0;
-	diff.sign = this->sign;
-
+	const int significand_len = 
+	
 	return diff;
 }}}
 
@@ -434,6 +438,7 @@ private: static constexpr int MAX_SIG_FIGS = 50;
 
 
 static BigFloat operator+(const BigFloat& left, const BigFloat& right) { return left.add(right); }
+static BigFloat operator-(const BigFloat& left, const BigFloat& right) { return left.subtract(right); }
 static BigFloat operator*(const BigFloat& left, const BigFloat& right) { return left.multiply(right); }
 
 static bool operator==(const BigFloat& left, const BigFloat& right) { return left.is_equal_to(right); }

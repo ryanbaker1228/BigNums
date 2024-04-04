@@ -34,7 +34,7 @@ namespace test_BigFloat
 	int _relationals();
 	int _float_constructor();
 	int _addition();
-	int _multiplication();
+	int _subtraction();
 }
 	
 
@@ -1005,27 +1005,25 @@ int test_BigFloat::_addition()
 		 == BigFloat(1'888'888'888'888'887ll));
 	mu_assert(BigFloat(10) + BigFloat(1) == BigFloat(11));
 	mu_assert(BigFloat(0.1) + BigFloat(0.1) == BigFloat(0.1 + 0.1));
+	mu_assert(BigFloat(0.2) + BigFloat(0.2) == BigFloat(0.2 + 0.2));
+
+	for (double a = 0.0, b = 500.0; a <= b; a += 0.5, b -= 0.5)
+	{
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert(BigFloat(a + b) == BigFloat(a) + BigFloat(b));
+	}
 
 	srand(42);
 
 	for (int i = 0; i < 1000; ++i)
 	{
-		union
-		{
-			double as_double;
-			uint64_t as_int;
-		};
-
-		uint64_t i_a = rand() + (uint64_t(rand()) << 32);
-		uint64_t i_b = rand() + (uint64_t(rand()) << 32);
-		as_int = i_a; double a = as_double;
-		as_int = i_b; double b = as_double;
-
-		if (std::isnan(a)) { a = 1.0; }
-		if (std::isnan(b)) { b = 1.0; }
+		int64_t a = rand() + (uint64_t(rand()) << 20);
+		int64_t b = rand(); 
 
 		BigFloat A(a);
 		BigFloat B(b);
+		BigFloat A_inv(1.0 / a);
+		BigFloat B_inv(1.0 / b);
 		BigFloat S(a + b);
 
 		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
@@ -1033,6 +1031,7 @@ int test_BigFloat::_addition()
 		mu_assert(B + A == S);
 		mu_assert(A + b == S);
 		mu_assert(b + A == S);
+		mu_assert((A_inv + B - BigFloat(1.0 / a + b)).abs() <= 1);	
 	}
 
 
@@ -1040,17 +1039,54 @@ int test_BigFloat::_addition()
 }}}
 
 
-int test_BigFloat::_multiplication()
+int test_BigFloat::_subtraction()
 {{{
 	mu_configure();
 
-	mu_assert(BigFloat(0) * BigFloat(0) == BigFloat(0));
-	mu_assert(BigFloat(1) * BigFloat(0) == BigFloat(0));
-	mu_assert(BigFloat(1.0) * BigFloat(0) == BigFloat(0));
-	mu_assert(BigFloat(1.0) * BigFloat(1) == BigFloat(1));
-	mu_assert(BigFloat(2.0) * BigFloat(1) == BigFloat(2));
-	mu_assert(BigFloat(-2.0) * BigFloat(1) == BigFloat(-2));
-	mu_assert(BigFloat(-2.0) * BigFloat(-1) == BigFloat(2));
+	mu_assert(BigFloat(0) - BigFloat(0) == BigFloat(0));
+	mu_assert(BigFloat(1) - BigFloat(0) == BigFloat(1));
+	mu_assert(BigFloat(0) - BigFloat(1) == BigFloat(-1));
+	mu_assert(BigFloat(1) - BigFloat(1) == BigFloat(0));
+	mu_assert(BigFloat(-1) - BigFloat(-1) == BigFloat(0));
+	mu_assert(BigFloat(-1) - BigFloat(1) == BigFloat(-2));
+	mu_assert(BigFloat(1) - BigFloat(-1) == BigFloat(2));
+	mu_assert(BigFloat(10) - BigFloat(1) == BigFloat(9));
+	mu_assert(BigFloat(1'888'888'888'888'887ll) 
+	          - BigFloat(888'888'888'888'888ll) 
+		     == BigFloat(999'999'999'999'999ll));
+	(BigFloat(1'888'888'888'888'887ll) - BigFloat(888888888888888ll)).print_digits();
+	 BigFloat(999'999'999'999'999ll).print_digits();
+
+	for (double a = 0.0, b = 500.0; a <= b; a += 0.5, b -= 0.5)
+	{
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert(BigFloat(a + b) == BigFloat(a) + BigFloat(b));
+	}
+
+	srand(42);
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		int64_t a = rand() + (uint64_t(rand()) << 20);
+		int64_t b = rand(); 
+
+		BigFloat A(a);
+		BigFloat B(b);
+		BigFloat A_inv(1.0 / a);
+		BigFloat B_inv(1.0 / b);
+		BigFloat D(a - b);
+
+		mu_set_error_message(std::to_string(a) + ", " + std::to_string(b));
+		mu_assert(A - B == D);
+		D.print_digits();
+		(A-B).print_digits();
+		std::cout << '\n';
+		mu_assert(B - A == D.negate());
+		mu_assert(A - b == D);
+		mu_assert(b - A == D.negate());
+		mu_assert((A_inv + B - BigFloat(1.0 / a + b)).abs() <= 1);	
+	}
+
 
 	mu_return();
 }}}
@@ -1079,6 +1115,7 @@ int main()
 	mu_run(test_BigFloat::_relationals);
 	mu_run(test_BigFloat::_float_constructor);
 	mu_run(test_BigFloat::_addition);
+	mu_run(test_BigFloat::_subtraction);
 	//mu_run(test_BigFloat::_multiplication);
 
 	return 0;
